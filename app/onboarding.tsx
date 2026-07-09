@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, useSlots, useOnboarding } from '../src/hooks';
 import type { DoseSlot } from '../src/types';
-import { generateId, getIconForTime } from '../src/utils/time';
+import { generateId, getIconForTime, sortSlotsByTime } from '../src/utils/time';
 import { TimePickerRow } from '../src/components/TimePickerRow';
 
 const DEFAULT_SLOTS: Omit<DoseSlot, 'id' | 'updatedAt'>[] = [
@@ -65,7 +65,7 @@ export default function Onboarding() {
   useEffect(() => {
     if (!existingSlotsLoading && !hydratedFromExisting) {
       if (existingSlots.length > 0) {
-        setLocalSlots(existingSlots);
+        setLocalSlots(sortSlotsByTime(existingSlots));
         setCount(existingSlots.length);
       }
       setHydratedFromExisting(true);

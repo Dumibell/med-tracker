@@ -13,7 +13,12 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSlots, useTodayLog, useStreak, useColors } from '../src/hooks';
 import type { DoseSlot } from '../src/types';
-import { pickActiveSlot, getIconForTime, formatTimeDisplay } from '../src/utils/time';
+import {
+  pickActiveSlot,
+  sortSlotsByTime,
+  getIconForTime,
+  formatTimeDisplay,
+} from '../src/utils/time';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -130,7 +135,7 @@ export default function MainScreen() {
 
         {/* Slot toggles */}
         <View style={styles.slotToggles}>
-          {slots.map((slot) => {
+          {sortSlotsByTime(slots).map((slot) => {
             const isSelected = selectedSlot?.id === slot.id;
             const isCompleted = isSlotCompleted(slot.id);
 

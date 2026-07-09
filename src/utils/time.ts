@@ -33,6 +33,14 @@ export function getCurrentMinutes(): number {
 }
 
 /**
+ * Sort slots chronologically by start time. Stable: slots with the same
+ * start time keep their relative (insertion) order.
+ */
+export function sortSlotsByTime(slots: DoseSlot[]): DoseSlot[] {
+  return [...slots].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+}
+
+/**
  * Pick the currently active slot based on current time
  * 1. If now is within start-end of a slot, return that slot
  * 2. Otherwise, return the next upcoming slot
@@ -41,7 +49,7 @@ export function getCurrentMinutes(): number {
 export function pickActiveSlot(slots: DoseSlot[]): DoseSlot | null {
   if (slots.length === 0) return null;
 
-  const sortedSlots = [...slots].sort((a, b) => a.order - b.order);
+  const sortedSlots = sortSlotsByTime(slots);
   const now = getCurrentMinutes();
 
   // 1. Check if we're within any slot's time range

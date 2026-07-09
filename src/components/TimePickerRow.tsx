@@ -52,7 +52,7 @@ export function TimePickerRow({
   };
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = [0, 15, 30, 45];
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
 
   return (
     <View style={styles.container}>

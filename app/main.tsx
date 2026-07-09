@@ -134,45 +134,42 @@ export default function MainScreen() {
             const isSelected = selectedSlot?.id === slot.id;
             const isCompleted = isSlotCompleted(slot.id);
 
+            let backgroundColor: string;
+            let borderColor: string;
+            let contentColor: string;
+
+            if (isCompleted) {
+              backgroundColor = colors.greenDark;
+              contentColor = colors.greenText;
+              borderColor = isSelected ? colors.greenLight : colors.greenDark;
+            } else if (isSelected) {
+              backgroundColor = colors.surface;
+              borderColor = colors.textSecondary;
+              contentColor = colors.text;
+            } else {
+              backgroundColor = 'transparent';
+              borderColor = colors.border;
+              contentColor = colors.textSecondary;
+            }
+
             return (
               <TouchableOpacity
                 key={slot.id}
-                style={[
-                  styles.slotToggle,
-                  {
-                    borderColor:
-                      isSelected || isCompleted ? colors.greenDark : colors.border,
-                    backgroundColor: isCompleted
-                      ? colors.greenDark
-                      : isSelected
-                        ? colors.greenLight + '30'
-                        : 'transparent',
-                  },
-                ]}
+                style={[styles.slotToggle, { backgroundColor, borderColor }]}
                 onPress={() => setSelectedSlot(slot)}
               >
                 <View style={styles.slotToggleContent}>
-                  <Ionicons
-                    name={getIconName(slot.start)}
-                    size={20}
-                    color={
-                      isCompleted
-                        ? colors.greenText
-                        : isSelected
-                          ? colors.greenDark
-                          : colors.textSecondary
-                    }
-                  />
+                  <View style={styles.slotIconBox}>
+                    <Ionicons
+                      name={isCompleted ? 'checkmark' : getIconName(slot.start)}
+                      size={16}
+                      color={contentColor}
+                    />
+                  </View>
                   <Text
                     style={[
                       styles.slotToggleName,
-                      {
-                        color: isCompleted
-                          ? colors.greenText
-                          : isSelected
-                            ? colors.greenDark
-                            : colors.text,
-                      },
+                      { color: contentColor, fontWeight: isCompleted ? '600' : '500' },
                     ]}
                   >
                     {slot.name}
@@ -300,9 +297,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
+  slotIconBox: {
+    width: 18,
+    alignItems: 'center',
+  },
   slotToggleName: {
     fontSize: 15,
-    fontWeight: '500',
   },
   circleContainer: {
     flex: 1,

@@ -10,7 +10,7 @@ export const Colors = {
     greenLight: '#C0DD97',
     greenMedium: '#97C459',
     greenDark: '#639922',
-    greenText: '#173404', // text on dark green
+    greenText: '#FFFFFF', // text on dark green
 
     // Streak pill (amber/warning)
     amber: '#F59E0B',

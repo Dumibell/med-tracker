@@ -149,6 +149,11 @@ export default function Onboarding() {
             </TouchableOpacity>
           )}
           <Text style={[styles.header, { color: colors.text }]}>약 알림 설정</Text>
+          {!isEditingSettings && (
+            <Text style={[styles.tagline, { color: colors.greenDark }]}>
+              약 먹었는지 확인하는 가장 빠른 방법
+            </Text>
+          )}
           <Text style={[styles.subheader, { color: colors.textSecondary }]}>
             하루에 몇 번 약을 드시나요?{'\n'}각 복용 시간대를 설정해주세요.
           </Text>
@@ -267,6 +272,11 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 28,
     fontWeight: '700',
+    marginBottom: 8,
+  },
+  tagline: {
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 8,
   },
   subheader: {

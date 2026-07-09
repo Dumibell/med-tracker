@@ -106,6 +106,25 @@ export function formatTimeDisplay(isoString: string): string {
 }
 
 /**
+ * Format elapsed time since an ISO timestamp as a short Korean relative
+ * string (e.g. "2시간 전"). Returns "" once the gap exceeds a day, since
+ * this is only meant for "먹은 지 얼마나 됐지?" on today's log.
+ */
+export function formatRelativeTime(isoString: string, now: Date = new Date()): string {
+  const then = new Date(isoString);
+  const diffMs = now.getTime() - then.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+
+  if (diffMinutes < 1) return '방금 전';
+  if (diffMinutes < 60) return `${diffMinutes}분 전`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}시간 전`;
+
+  return '';
+}
+
+/**
  * Calculate streak: consecutive days where ALL doses were taken
  * Count from today (if complete) or yesterday backwards
  */

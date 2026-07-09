@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "약 복용 트래커",
+    "name": "먹었다",
     "slug": "med-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,9 +13,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
+        "backgroundColor": "#6BA43A",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.jennycho.medtracker"
@@ -26,7 +25,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      "./plugins/withNoPushEntitlement.js"
     ]
   }
 }

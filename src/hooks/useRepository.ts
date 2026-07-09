@@ -51,11 +51,19 @@ export function useTodayLog(slots: DoseSlot[]) {
     [log, today, loadLog]
   );
 
+  const updateDoseTime = useCallback(
+    async (slotId: string, at: string) => {
+      await repository.setDose(today, slotId, true, at);
+      await loadLog();
+    },
+    [today, loadLog]
+  );
+
   const completedCount = slots.filter(
     (slot) => log?.entries[slot.id]?.taken
   ).length;
 
-  return { log, loading, toggleDose, completedCount, refreshLog: loadLog };
+  return { log, loading, toggleDose, updateDoseTime, completedCount, refreshLog: loadLog };
 }
 
 export function useStreak(slots: DoseSlot[]) {

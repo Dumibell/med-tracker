@@ -1,119 +1,46 @@
-# 약 복용 트래커 앱 - 프로젝트 컨텍스트
+# CLAUDE.md — 먹었다
 
-## 프로젝트 개요
+이 파일은 항상 적용되는 프로젝트의 기본 원칙이다. 세부 규격은 `.claude/skills/`의 스킬을 참고한다.
 
-개인용 약 복용 체크 앱. "약을 먹었는지 안 먹었는지 모른다"는 불확실성을 해결하는 게 목표.
+## 제품 한 줄 정의
 
-- **핵심 UX**: 앱을 켜자마자 "지금 이 약 먹었나?"에 답이 보여야 함. 켜서 → 큰 원 한 번 탭이 기본 동선.
-- **로컬 우선**: 로그인/계정 없이 로컬 저장만으로 동작 (나중에 클라우드 동기화 대비 설계됨)
+"약 먹었는지 **확인**시켜주는" 앱. 약 먹으라고 알려주는 리마인더가 아니라, "이미 먹었나?"를 확인시켜주는 데 집중한다. 이름 "먹었다"가 곧 "먹었나?"의 답이다.
+
+## 절대 기준 (모든 결정의 판단 근거)
+
+1. **즉답성** — 앱을 켜자마자(또는 위젯으로 열지 않고도) "지금 이 약 먹었나?"에 바로 답이 보여야 한다.
+2. **불확실성 제거** — 체크 시각을 기록해 "먹었나?"라는 순간을 없앤다.
+3. **재촉이 아니라 안심** — 압박·죄책감 유발 UX(과한 스트릭 강조 등) 지양. 캘린더/기록은 "잘 챙겼다는 증거" 톤.
+
+기능을 추가·변경할 때 위 세 가지에 부합하는지 먼저 따진다. 리마인더 앱 기능을 무분별하게 흡수하지 않는다.
 
 ## 기술 스택
 
-- **Expo SDK 57** + TypeScript + expo-router (파일 기반 라우팅)
-- **react-native-mmkv**: 로컬 저장소 (빠르고 동기적)
-- **expo-haptics**: 탭 시 햅틱 피드백
-- **@react-native-picker/picker**: 시간 선택
-- **@expo/vector-icons** (Ionicons): 아이콘
+- Expo (React Native) + TypeScript (strict)
+- expo-router (파일 기반 라우팅)
+- 로컬 저장: react-native-mmkv — **반드시 Repository 계층 뒤에 둔다**. UI는 저장소 구현을 직접 모른다.
+- expo-notifications / expo-haptics
 
-## 프로젝트 구조
+## 아키텍처 원칙
 
-```
-med-tracker/
-├── app/                    # expo-router 페이지
-│   ├── _layout.tsx         # 루트 레이아웃 (Stack)
-│   ├── index.tsx           # 진입점 - 온보딩 완료 여부 체크 후 라우팅
-│   ├── onboarding.tsx      # 온보딩 화면 (복용 횟수/시간대 설정)
-│   └── main.tsx            # 메인 화면 (큰 원 + 캘린더)
-├── src/
-│   ├── types.ts            # DoseSlot, DoseLog, MedRepository 타입
-│   ├── repository/
-│   │   ├── LocalRepository.ts  # MMKV 기반 저장소 구현
-│   │   └── index.ts
-│   ├── hooks/
-│   │   ├── useRepository.ts    # useSlots, useTodayLog, useStreak, useCalendarData
-│   │   ├── useColors.ts        # 다크모드 대응 색상
-│   │   └── index.ts
-│   ├── components/
-│   │   ├── TimePickerRow.tsx   # 시간 선택 (시작~종료)
-│   │   ├── Calendar.tsx        # 월 캘린더 (복용 기록 시각화)
-│   │   └── index.ts
-│   ├── constants/
-│   │   └── colors.ts       # 색상 정의 (light/dark)
-│   └── utils/
-│       └── time.ts         # 시간→아이콘, pickActiveSlot, 스트릭 계산 등
-├── app.json
-├── package.json
-└── tsconfig.json
-```
+- **저장소 추상화**: 화면/컴포넌트는 `MedRepository` 인터페이스에만 의존. 현재는 `LocalRepository`(mmkv), 추후 클라우드는 `CloudRepository`로 드롭인. → `data-layer` 스킬 참고.
+- **동기화 대비 데이터 모델**: 고정 UUID, 날짜(ISO) 키, 모든 레코드 `updatedAt`, 삭제는 `deletedAt` 소프트 삭제. 지금 클라우드를 안 붙여도 이 규칙은 지킨다.
+- **로직 분리**: `pickActive`, `streak`, `timeIcon`, 정렬 등 순수 로직은 UI에서 분리해 테스트 가능하게.
 
-## 데이터 모델
+## 코드 컨벤션
 
-```typescript
-type DoseSlot = {
-  id: string; // UUID
-  name: string; // "아침", "저녁" 등
-  start: string; // "HH:MM"
-  end: string; // "HH:MM"
-  order: number;
-  updatedAt: string; // ISO
-  deletedAt?: string; // 소프트 삭제
-};
+- 함수형 컴포넌트 + 훅. 부수효과 최소화, 순수 로직은 별도 함수로.
+- 타입 우선: `any` 지양, 도메인 타입(`DoseSlot`, `DoseLog`)을 단일 출처로.
+- 커밋은 작고 목적 단위로. 한 커밋에 무관한 변경 섞지 않기.
 
-type DoseLog = {
-  date: string; // "YYYY-MM-DD"
-  entries: Record<string, { taken: boolean; at?: string }>; // key = slotId
-  updatedAt: string;
-};
-```
+## 디자인 언어 (요약)
 
-## 핵심 로직
+- 다크 우선, 플랫·미니멀, 여백 넉넉. 그라디언트·과한 그림자 지양.
+- 완료/브랜드 초록: `#6BA43A`. **초록은 "먹음"에만** 쓰고, 선택 등 다른 상태는 중립색으로.
+- UI 카피는 한국어, 담백하고 다정하게.
+- 세부 토큰·컴포넌트 규칙(탭 상태, 탭 인터랙션, 캘린더 색, 로고)은 → `ui-conventions` 스킬 참고.
 
-1. **시각 → 아이콘**: 5~11시=sunrise, 11~16시=sun, 16~21시=sunset, 그 외=moon
-2. **pickActiveSlot**: 현재 시간대 슬롯 자동 선택 (start≤now≤end → 해당 슬롯, 없으면 다음 슬롯)
-3. **스트릭**: 모든 슬롯을 먹은 날만 연속 카운트
-4. **캘린더 색**: 완료율에 따라 연한 초록 → 진한 초록
+## 스킬
 
-## 현재 상태
-
-- ✅ 프로젝트 스캐폴드 완료
-- ✅ 타입, 저장소, 훅, 유틸 구현 완료
-- ✅ 온보딩 화면 구현 완료 (스텝퍼, 시간 선택, 하단 고정 버튼)
-- ✅ 메인 화면 구현 완료 (슬롯 토글, 큰 원, 캘린더)
-- ⏳ 실제 디바이스/시뮬레이터 테스트 필요 (MMKV는 웹에서 안 됨)
-
-## 실행 방법
-
-```bash
-# Node 20+ 필요
-source ~/.nvm/nvm.sh && nvm use 20
-npm start
-# 또는
-npx expo start --ios
-```
-
-## 남은 작업 / 오픈 이슈
-
-- Xcode 설정 후 iOS 시뮬레이터 테스트
-- 실제 기기에서 MMKV 동작 확인
-- (후순위) expo-notifications로 알림 기능
-- (후순위) 클라우드 동기화
-
-## 디자인 노트
-
-- 초록 액센트: 연함 #C0DD97, 중간 #97C459, 진함 #639922
-- 스트릭 pill: 앰버/warning 톤
-- 라이트/다크 모드 모두 대응
-- UI 카피는 한국어
-
-## 원본 스펙 문서 요약
-
-### 화면 스펙
-
-**온보딩**: 하루 복용 횟수 스텝퍼(1~10) + 각 항목별 이름/시간대 설정 + 하단 고정 "시작하기" 버튼
-**메인**: 헤더(오늘의 약 + 스트릭 pill + 설정) → 상단 슬롯 토글(완료 시 체크 표시) → 중앙 큰 원(140px, 탭하여 체크/취소) → 요약 텍스트 → 월 캘린더
-
-### 초기 테스트용 기본 설정
-
-- 아침 07:00~11:00
-- 저녁 17:00~21:00
-- 취침 전 22:00~24:00
+- `ui-conventions` — 색 토큰, 로고 사용, 탭 상태/인터랙션, 캘린더 표현. UI·스타일 작업 시.
+- `data-layer` — 데이터 모델, Repository, 정렬·활성탭·스트릭 로직. 저장/데이터 작업 시.

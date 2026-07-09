@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -52,13 +52,25 @@ function createDefaultSlot(index: number): DoseSlot {
 export default function Onboarding() {
   const router = useRouter();
   const colors = useColors();
-  const { saveSlots } = useSlots();
-  const { completeOnboarding } = useOnboarding();
+  const { slots: existingSlots, loading: existingSlotsLoading, saveSlots } = useSlots();
+  const { hasCompleted, completeOnboarding } = useOnboarding();
+  const isEditingSettings = hasCompleted === true;
 
   const [count, setCount] = useState(3);
   const [slots, setLocalSlots] = useState<DoseSlot[]>(() =>
     Array.from({ length: 3 }, (_, i) => createDefaultSlot(i))
   );
+  const [hydratedFromExisting, setHydratedFromExisting] = useState(false);
+
+  useEffect(() => {
+    if (!existingSlotsLoading && !hydratedFromExisting) {
+      if (existingSlots.length > 0) {
+        setLocalSlots(existingSlots);
+        setCount(existingSlots.length);
+      }
+      setHydratedFromExisting(true);
+    }
+  }, [existingSlotsLoading, existingSlots, hydratedFromExisting]);
 
   const handleCountChange = useCallback(
     (newCount: number) => {
@@ -94,8 +106,12 @@ export default function Onboarding() {
 
   const handleStart = async () => {
     await saveSlots(slots);
-    await completeOnboarding();
-    router.replace('/main');
+    if (isEditingSettings) {
+      router.back();
+    } else {
+      await completeOnboarding();
+      router.replace('/main');
+    }
   };
 
   const getIconName = (startTime: string) => {
@@ -123,6 +139,15 @@ export default function Onboarding() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {isEditingSettings && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
+            </TouchableOpacity>
+          )}
           <Text style={[styles.header, { color: colors.text }]}>약 알림 설정</Text>
           <Text style={[styles.subheader, { color: colors.textSecondary }]}>
             하루에 몇 번 약을 드시나요?{'\n'}각 복용 시간대를 설정해주세요.
@@ -204,13 +229,18 @@ export default function Onboarding() {
         </ScrollView>
 
         {/* Sticky bottom button */}
-        <View style={[styles.bottomContainer, { borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.bottomContainer,
+            { borderColor: colors.border, backgroundColor: colors.background },
+          ]}
+        >
           <TouchableOpacity
             style={[styles.startButton, { backgroundColor: colors.greenDark }]}
             onPress={handleStart}
           >
             <Text style={[styles.startButtonText, { color: colors.greenText }]}>
-              시작하기
+              {isEditingSettings ? '저장하기' : '시작하기'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -229,6 +259,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 100,
+  },
+  backButton: {
+    marginBottom: 12,
+    alignSelf: 'flex-start',
   },
   header: {
     fontSize: 28,

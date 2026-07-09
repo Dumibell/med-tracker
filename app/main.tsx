@@ -8,24 +8,12 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import {
-  useSlots,
-  useTodayLog,
-  useStreak,
-  useColors,
-  useCalendarData,
-} from '../src/hooks';
+import { useSlots, useTodayLog, useStreak, useColors } from '../src/hooks';
 import type { DoseSlot } from '../src/types';
-import {
-  pickActiveSlot,
-  getIconForTime,
-  formatTimeDisplay,
-  getTodayDate,
-} from '../src/utils/time';
-import { Calendar } from '../src/components/Calendar';
+import { pickActiveSlot, getIconForTime, formatTimeDisplay } from '../src/utils/time';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -45,11 +33,13 @@ export default function MainScreen() {
     }
   }, [slots, selectedSlot]);
 
-  // Refresh data when screen focuses
-  useEffect(() => {
-    refreshSlots();
-    refreshLog();
-  }, []);
+  // Refresh data whenever this screen regains focus (e.g. returning from settings)
+  useFocusEffect(
+    useCallback(() => {
+      refreshSlots();
+      refreshLog();
+    }, [refreshSlots, refreshLog])
+  );
 
   const handleCircleTap = useCallback(async () => {
     if (!selectedSlot) return;
@@ -125,6 +115,12 @@ export default function MainScreen() {
             )}
             <TouchableOpacity
               style={styles.settingsButton}
+              onPress={() => router.push('/calendar')}
+            >
+              <Ionicons name="calendar-outline" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.settingsButton}
               onPress={() => router.push('/onboarding')}
             >
               <Ionicons name="settings-outline" size={24} color={colors.text} />
@@ -144,8 +140,13 @@ export default function MainScreen() {
                 style={[
                   styles.slotToggle,
                   {
-                    borderColor: isSelected ? colors.greenDark : colors.border,
-                    backgroundColor: isSelected ? colors.greenLight + '30' : 'transparent',
+                    borderColor:
+                      isSelected || isCompleted ? colors.greenDark : colors.border,
+                    backgroundColor: isCompleted
+                      ? colors.greenDark
+                      : isSelected
+                        ? colors.greenLight + '30'
+                        : 'transparent',
                   },
                 ]}
                 onPress={() => setSelectedSlot(slot)}
@@ -154,19 +155,28 @@ export default function MainScreen() {
                   <Ionicons
                     name={getIconName(slot.start)}
                     size={20}
-                    color={isSelected ? colors.greenDark : colors.textSecondary}
+                    color={
+                      isCompleted
+                        ? colors.greenText
+                        : isSelected
+                          ? colors.greenDark
+                          : colors.textSecondary
+                    }
                   />
                   <Text
                     style={[
                       styles.slotToggleName,
-                      { color: isSelected ? colors.greenDark : colors.text },
+                      {
+                        color: isCompleted
+                          ? colors.greenText
+                          : isSelected
+                            ? colors.greenDark
+                            : colors.text,
+                      },
                     ]}
                   >
                     {slot.name}
                   </Text>
-                  {isCompleted && (
-                    <Ionicons name="checkmark-circle" size={18} color={colors.greenDark} />
-                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -193,14 +203,14 @@ export default function MainScreen() {
             >
               {isSelectedCompleted ? (
                 <>
-                  <Ionicons name="checkmark" size={60} color={colors.greenText} />
+                  <Ionicons name="checkmark" size={76} color={colors.greenText} />
                 </>
               ) : (
                 <>
                   {selectedSlot && (
-                    <Ionicons
-                      name={getIconName(selectedSlot.start)}
-                      size={48}
+                    <MaterialCommunityIcons
+                      name="pill"
+                      size={60}
                       color={colors.textSecondary}
                     />
                   )}
@@ -225,12 +235,6 @@ export default function MainScreen() {
         <Text style={[styles.summary, { color: colors.textSecondary }]}>
           오늘 {completedCount}/{slots.length} 완료
         </Text>
-
-        {/* Calendar */}
-        <View style={styles.calendarSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>복용 기록</Text>
-          <Calendar slots={slots} />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -249,6 +253,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     padding: 20,
   },
   header: {
@@ -300,13 +305,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   circleContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
   },
   mainCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
@@ -318,14 +324,5 @@ const styles = StyleSheet.create({
   summary: {
     textAlign: 'center',
     fontSize: 16,
-    marginBottom: 32,
-  },
-  calendarSection: {
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
   },
 });

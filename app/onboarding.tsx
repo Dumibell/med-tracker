@@ -104,6 +104,15 @@ export default function Onboarding() {
     []
   );
 
+  const handleDeleteSlot = useCallback((index: number) => {
+    setLocalSlots((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, i) => i !== index);
+      setCount(next.length);
+      return next;
+    });
+  }, []);
+
   const handleStart = async () => {
     await saveSlots(slots);
     if (isEditingSettings) {
@@ -228,6 +237,15 @@ export default function Onboarding() {
                     onEndChange={(time) => handleSlotChange(index, 'end', time)}
                   />
                 </View>
+                {slots.length > 1 && (
+                  <TouchableOpacity
+                    style={styles.slotDeleteButton}
+                    onPress={() => handleDeleteSlot(index)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="trash-outline" size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
               </View>
             ))}
           </View>
@@ -334,6 +352,10 @@ const styles = StyleSheet.create({
   slotContent: {
     flex: 1,
     gap: 12,
+  },
+  slotDeleteButton: {
+    marginLeft: 8,
+    padding: 4,
   },
   slotNameInput: {
     fontSize: 16,

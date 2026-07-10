@@ -319,11 +319,35 @@ export default function MainScreen() {
                 activeOpacity={0.8}
               >
                 {isSelectedCompleted ? (
-                  <Ionicons
-                    name="checkmark"
-                    size={76}
-                    color={colors.greenDark}
-                  />
+                  <View style={styles.circleTakenContent}>
+                    <Ionicons
+                      name="checkmark"
+                      size={52}
+                      color={colors.greenDark}
+                    />
+                    {selectedEntry?.at && (
+                      <>
+                        <Text
+                          style={[
+                            styles.circleTakenTime,
+                            { color: colors.greenDark },
+                          ]}
+                        >
+                          {formatTimeDisplay(selectedEntry.at)}에 먹음
+                        </Text>
+                        {formatRelativeTime(selectedEntry.at) !== "" && (
+                          <Text
+                            style={[
+                              styles.circleTakenRelative,
+                              { color: colors.textSecondary },
+                            ]}
+                          >
+                            {formatRelativeTime(selectedEntry.at)}
+                          </Text>
+                        )}
+                      </>
+                    )}
+                  </View>
                 ) : (
                   <>
                     {selectedSlot && (
@@ -378,24 +402,9 @@ export default function MainScreen() {
               state adds the "시각 수정" link (and a longer label). */}
           <View style={styles.circleFooter}>
             <Text
-              style={[
-                styles.circleLabel,
-                {
-                  color: isSelectedCompleted
-                    ? colors.greenDark
-                    : colors.textSecondary,
-                },
-              ]}
+              style={[styles.circleLabel, { color: colors.textSecondary }]}
             >
-              {isSelectedCompleted && selectedEntry?.at
-                ? (() => {
-                    const relative = formatRelativeTime(selectedEntry.at);
-                    const relativeSuffix = relative ? ` (${relative})` : "";
-                    return `${formatTimeDisplay(
-                      selectedEntry.at,
-                    )}에 먹음${relativeSuffix} · 다시 탭하면 취소`;
-                  })()
-                : "탭하여 체크"}
+              {isSelectedCompleted ? "다시 탭하면 취소" : "탭하여 체크"}
             </Text>
 
             {isSelectedCompleted && (
@@ -572,6 +581,21 @@ const styles = StyleSheet.create({
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
+  },
+  circleTakenContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  circleTakenTime: {
+    marginTop: 6,
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  circleTakenRelative: {
+    marginTop: 2,
+    fontSize: 12,
   },
   circleFooter: {
     height: 64,

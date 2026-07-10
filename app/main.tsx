@@ -299,11 +299,18 @@ export default function MainScreen() {
         {/* Main circle — the hero. Which slot is shown is named just above it,
             and the dot row below doubles as today's progress + navigator. */}
         <View style={styles.circleContainer}>
-          {selectedSlot && (
-            <Text style={[styles.slotTitle, { color: colors.text }]}>
-              {selectedSlot.name}
-            </Text>
-          )}
+          {/* Fixed-height, single line so the circle below never shifts when
+              the slot name length changes between slots. */}
+          <View style={styles.slotTitleBox}>
+            {selectedSlot && (
+              <Text
+                style={[styles.slotTitle, { color: colors.text }]}
+                numberOfLines={1}
+              >
+                {selectedSlot.name}
+              </Text>
+            )}
+          </View>
           <View style={styles.circleWrapper} {...panResponder.panHandlers}>
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <TouchableOpacity
@@ -546,10 +553,15 @@ const styles = StyleSheet.create({
   settingsButton: {
     padding: 4,
   },
+  slotTitleBox: {
+    height: 26,
+    justifyContent: "center",
+    marginBottom: 20,
+  },
   slotTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 20,
+    textAlign: "center",
   },
   dotRow: {
     flexDirection: "row",

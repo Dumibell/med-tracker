@@ -1,6 +1,6 @@
 ---
 name: ui-conventions
-description: 먹었다 앱의 UI를 만들거나 수정할 때 적용하는 시각 규칙. 색 토큰, 로고 사용법, 복용 탭의 두 축(선택=보더 두께+굵은 텍스트 / 먹음=초록 보더색) 상태 모델과 4가지 상태·레이아웃 밀림 방지, 탭 인터랙션(체크/해제 비대칭), 캘린더 색 표현, 시간대 아이콘. 컴포넌트·스타일·애니메이션·아이콘 작업 시 참고.
+description: 먹었다 앱의 UI를 만들거나 수정할 때 적용하는 시각 규칙. 색 토큰, 로고 사용법, 슬롯 네비게이터(점 인디케이터+스와이프, 먹음=초록 채움 / 현재=크기+중립 링의 두 축), 슬롯 이름 타이틀, 탭 인터랙션(체크/해제 비대칭), 캘린더 색 표현, 시간대 아이콘. 컴포넌트·스타일·애니메이션·아이콘 작업 시 참고.
 ---
 
 # 먹었다 — UI 컨벤션
@@ -26,84 +26,60 @@ description: 먹었다 앱의 UI를 만들거나 수정할 때 적용하는 시�
 
 - `5–10` → sunrise · `11–15` → sun · `16–20` → sunset · 그 외(밤) → moon
 
-## 복용 탭 (상단 토글)
+## 슬롯 네비게이터 (점 인디케이터 + 스와이프)
 
-항목이 곧 오늘의 진행 바. **두 가지 정보를 각각 다른 축으로 표현한다. 절대 하나로 묶지 않는다.**
+화면의 주인공은 **큰 원 하나**다. "지금 이 약 먹었나?"에 켜자마자 답이 보여야 하므로, 여러 슬롯을 나열하는 상단 탭 바를 두지 않는다. 대신:
 
-- **선택 축 = 보더를 더 굵게 + 텍스트·아이콘을 굵게(bold).** 배경 채움이나 그림자는 쓰지 않는다 — 순전히 보더 두께와 폰트 굵기로만 "선택됨"을 표시.
-- **먹음 축 = 초록 체크 + 초록 텍스트 + 초록 보더 색.** 선택 여부와 무관.
-- **초록은 오직 먹음에만.** 선택에 초록을 쓰면 "먹음+선택"이 "먹음+미선택"과 구분되지 않는다(실제로 발생했던 문제).
-- **보더는 모든 상태에 항상 존재한다** (색은 먹음 축, 두께는 선택 축 — 서로 다른 속성이라 절대 안 부딪힌다). 먹음이 아니면 옅은 중립 보더(`colors.border`), 먹음이면 옅은 초록 보더. 두께는 미선택 `1.5`, 선택 `2`.
-- 배경은 항상 투명. 선택/먹음 어떤 조합이든 배경 채움을 쓰지 않는다.
+- 켜면 `pickActiveSlot`이 고른 **지금 시간대 슬롯**이 큰 원에 뜬다.
+- **어느 슬롯인지**는 큰 원 바로 위 **슬롯 이름 타이틀**이 준다(예: "점심", `fontSize 18 / 600`). 탭 바가 주던 맥락을 이게 대신한다.
+- **오늘 다른 시간대**로 이동은 원을 **가로 스와이프**하거나, 원 아래 **점을 탭**. 점 줄은 곧 오늘의 진행 바를 겸한다.
 
-### 4가지 상태
+### 점 인디케이터 — 두 축을 절대 하나로 묶지 않는다
 
-| 상태               | 배경 | 보더 색            | 보더 두께 | 아이콘              | 라벨       |
-| ------------------ | ---- | ------------------- | --------- | ------------------- | ---------- |
-| 기본 (미선택·아직) | 투명 | 옅은 중립 (`border`) | 1.5       | 시간대 아이콘(회색) | 회색       |
-| 선택 · 아직        | 투명 | 옅은 중립 (`border`) | 2         | 시간대 아이콘(진함) | 기본색, 굵게 |
-| 먹음 · 미선택      | 투명 | 옅은 초록            | 1.5       | 체크(초록, 얇음)     | 초록       |
-| 먹음 · 선택        | 투명 | 옅은 초록            | 2         | 체크(초록, **굵음**) | 초록, 굵게 |
+상단 토글과 동일한 핵심 규칙이 점에도 그대로 적용된다. **먹음**과 **현재 위치**는 서로 다른 시각 속성으로 표현한다.
 
-### 구현: 상태 조합으로 분기하지 말 것
-
-`selected`와 `taken`을 **독립 속성으로 합친다.** 색은 `taken`이, 두께는 `selected`가 각각 정하고 절대 하나의 if/else 트리로 합치지 않는다 — 그래야 두 축이 서로 안 밟고 네 조합이 자동으로 구분된다.
+- **먹음 축 = 초록 채움.** `taken`이면 `greenDark`로 꽉 채운다(+같은 초록 보더). 아니면 투명 + 옅은 중립 보더(`colors.border`).
+- **현재 축 = 크기 + 중립 링.** 현재 슬롯은 지름을 키우고(`9→12`) 보더를 중립색(`colors.uncheckedBorder`)으로. **절대 색(초록)으로 현재를 표시하지 않는다** — 초록을 현재에 쓰면 "먹음+현재"가 "먹음+비현재"와 구분되지 않는다(상단 토글에서 겪었던 문제와 동형).
+- 이렇게 채움=먹음 / 크기·링=현재로 분리하면 네 조합(먹음·현재)이 자동으로 구분된다.
+- 슬롯이 하나뿐이면 점 줄 자체를 숨긴다(`sortedSlots.length > 1`).
 
 ```tsx
-const tabStyle = [
-  styles.tabBase, // borderRadius/padding만, 색·두께는 아래서 인라인으로
-  {
-    borderColor: taken ? greenBorder : neutralBorder, // 먹음 축: 색
-    borderWidth: selected ? 2 : 1.5, // 선택 축: 두께
-  },
-];
+const taken = isSlotCompleted(slot.id);
+const isCurrent = i === currentIndex;
 
-const tint = taken ? greenDark : selected ? textStrong : textMuted;
-const textColor = tint;
-const textWeight = selected ? "600" : "500";
-
-// 아이콘도 선택 축에 반응해야 한다 — 벡터 글리프는 fontWeight로 안 굵어지므로
-// "굵은 변형 아이콘"을 따로 골라야 함. 체크가 taken일 때 항상 굵으면 선택 여부가
-// 구분이 안 되니, **굵은 체크(check-bold)는 taken && selected일 때만** 쓴다.
-// taken && !selected는 얇은 Ionicons "checkmark" 그대로.
-{taken ? (
-  selected ? (
-    <MaterialCommunityIcons name="check-bold" size={16} color={tint} />
-  ) : (
-    <Ionicons name="checkmark" size={16} color={tint} />
-  )
-) : (
-  <Ionicons name={timeIcon(slot.start)} size={16} color={tint} />
-)}
+<View
+  style={[
+    styles.dot, // width/height 9, borderRadius 4.5, borderWidth 1.5
+    {
+      backgroundColor: taken ? colors.greenDark : "transparent", // 먹음 축: 채움
+      borderColor: taken ? colors.greenDark : colors.border,
+    },
+    isCurrent && [
+      styles.dotCurrent, // width/height 12, borderRadius 6
+      { borderColor: colors.uncheckedBorder }, // 현재 축: 크기 + 중립 링
+    ],
+  ]}
+/>;
 ```
+
+- 점은 시간순(`sortSlotsByTime`). 탭하면 `selectByIndex(i)`로 그 슬롯을 큰 원에 올린다. `hitSlop`으로 탭 영역을 넉넉히.
+
+### 스와이프 (원을 넘겨 시간대 이동)
+
+새 의존성 없이 RN 내장 `PanResponder`로 처리. **가로 드래그가 명확할 때만** 제스처를 잡아, 원의 탭(체크/해제)과 세로 스크롤은 그대로 통과시킨다. 양 끝에서 멈춘다(wrap 안 함).
 
 ```tsx
-tabBase: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
-// neutralBorder = colors.border, greenBorder = colors.greenLight(또는 옅은 초록 예: #CBE7B3)
+// swipeState 를 ref로 두어, 한 번 만든 PanResponder가 항상 최신 인덱스 기준으로 이동.
+onMoveShouldSetPanResponder: (_, g) =>
+  Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy),
+onPanResponderRelease: (_, g) => {
+  const { currentIndex, selectByIndex } = swipeState.current;
+  if (g.dx < -40) selectByIndex(currentIndex + 1); // 다음(늦은 시각)
+  else if (g.dx > 40) selectByIndex(currentIndex - 1); // 이전
+},
 ```
 
-두께 변화는 1px 미만 차이라 옆 탭 레이아웃이 흔들리지 않는다. 라이트/다크 동일하게 동작한다(보더 색 토큰만 테마별로 바뀌면 됨).
-
-### 레이아웃 밀림 방지 (중요)
-
-먹음 표시로 체크를 붙일 때 탭 너비가 바뀌면 옆 탭이 밀린다. **취소선 금지.** 대신:
-
-- 아이콘을 **고정폭 컨테이너**(예: `width: 18`)로 감싸고, 평소엔 시간대 아이콘, 먹으면 **같은 자리의 글리프만 체크로 교체**. 너비 불변, 빈 공백 없음.
-
-```tsx
-<View style={{ width: 18, alignItems: "center" }}>
-  {taken ? (
-    selected ? (
-      <MaterialCommunityIcons name="check-bold" size={16} color={tint} />
-    ) : (
-      <Ionicons name="checkmark" size={16} color={tint} />
-    )
-  ) : (
-    <Ionicons name={timeIcon(slot.start)} size={16} color={tint} />
-  )}
-</View>
-<Text style={{ color: textColor, fontWeight: textWeight }}>{slot.name}</Text>
-```
+`panResponder.panHandlers`는 큰 원 래퍼 `View`에 스프레드한다.
 
 ## 탭 인터랙션 (체크/해제 비대칭)
 
@@ -229,7 +205,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 ## 큰 원 (선택된 항목)
 
 - 미복용: 얇은 링 + 모노 알약 심볼(중립색). "탭하여 체크".
-- 복용: 초록 링(시계방향으로 채워짐) + 그 안에 **체크**(알약 아님). "됐다"에 집중. 무슨 약인지 맥락은 상단 탭이 이미 준다.
+- 복용: 초록 링(시계방향으로 채워짐) + 그 안에 **체크**(알약 아님). "됐다"에 집중. 무슨 약인지 맥락은 원 위 슬롯 이름 타이틀이 준다.
 
 ## 캘린더
 

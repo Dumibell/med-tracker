@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,11 @@ import {
   Animated,
   Easing,
   Alert,
+  PanResponder,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import { useSlots, useTodayLog, useStreak, useColors } from "../src/hooks";
@@ -24,7 +25,6 @@ import type { DoseSlot } from "../src/types";
 import {
   pickActiveSlot,
   sortSlotsByTime,
-  getIconForTime,
   formatTimeDisplay,
   formatRelativeTime,
   getTodayDate,
@@ -50,6 +50,37 @@ export default function MainScreen() {
   const [sweepAnim] = useState(new Animated.Value(0));
   const [flashAnim] = useState(new Animated.Value(0));
   const [timeEditVisible, setTimeEditVisible] = useState(false);
+
+  const sortedSlots = useMemo(() => sortSlotsByTime(slots), [slots]);
+  const currentIndex = selectedSlot
+    ? sortedSlots.findIndex((s) => s.id === selectedSlot.id)
+    : -1;
+
+  const selectByIndex = useCallback(
+    (i: number) => {
+      if (i < 0 || i >= sortedSlots.length) return;
+      setSelectedSlot(sortedSlots[i]);
+    },
+    [sortedSlots],
+  );
+
+  // PanResponder reads the latest index/handler through a ref so the gesture
+  // created once still moves relative to the current slot.
+  const swipeState = useRef({ currentIndex, selectByIndex });
+  swipeState.current = { currentIndex, selectByIndex };
+  const panResponder = useRef(
+    PanResponder.create({
+      // Only claim the gesture on a clear horizontal drag — taps still reach
+      // the circle's TouchableOpacity for check/uncheck.
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderRelease: (_, g) => {
+        const { currentIndex, selectByIndex } = swipeState.current;
+        if (g.dx < -40) selectByIndex(currentIndex + 1);
+        else if (g.dx > 40) selectByIndex(currentIndex - 1);
+      },
+    }),
+  ).current;
 
   // Auto-select active slot on load
   useEffect(() => {
@@ -202,20 +233,6 @@ export default function MainScreen() {
     [selectedSlot, updateDoseTime],
   );
 
-  const getIconName = (startTime: string) => {
-    const icon = getIconForTime(startTime);
-    switch (icon) {
-      case "sunrise":
-        return "sunny-outline";
-      case "sun":
-        return "sunny";
-      case "sunset":
-        return "partly-sunny-outline";
-      case "moon":
-        return "moon-outline";
-    }
-  };
-
   const isSlotCompleted = (slotId: string) => {
     return log?.entries[slotId]?.taken ?? false;
   };
@@ -246,9 +263,12 @@ export default function MainScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            오늘의 약
-          </Text>
+          <View style={styles.headerTitleRow}>
+            <LogoSymbol size={26} color={colors.greenDark} />
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              먹었다
+            </Text>
+          </View>
           <View style={styles.headerRight}>
             {streak > 0 && (
               <View
@@ -276,77 +296,15 @@ export default function MainScreen() {
           </View>
         </View>
 
-        {/* Slot toggles */}
-        <View style={styles.slotToggles}>
-          {sortSlotsByTime(slots).map((slot) => {
-            const isSelected = selectedSlot?.id === slot.id;
-            const isCompleted = isSlotCompleted(slot.id);
-
-            // Two independent axes — never fold them into one branch:
-            // selection = bolder border + bold text/icon, taken = green
-            // check/text/border color. Green means "taken" and nothing else.
-            const contentColor = isCompleted
-              ? colors.greenDark
-              : isSelected
-                ? colors.text
-                : colors.textSecondary;
-
-            return (
-              <TouchableOpacity
-                key={slot.id}
-                style={[
-                  styles.slotToggle,
-                  {
-                    borderColor: isCompleted ? colors.greenLight : colors.border,
-                    borderWidth: isSelected ? 2 : 1.5,
-                  },
-                ]}
-                onPress={() => setSelectedSlot(slot)}
-              >
-                <View style={styles.slotToggleContent}>
-                  <View style={styles.slotIconBox}>
-                    {isCompleted ? (
-                      isSelected ? (
-                        <MaterialCommunityIcons
-                          name="check-bold"
-                          size={16}
-                          color={contentColor}
-                        />
-                      ) : (
-                        <Ionicons
-                          name="checkmark"
-                          size={16}
-                          color={contentColor}
-                        />
-                      )
-                    ) : (
-                      <Ionicons
-                        name={getIconName(slot.start)}
-                        size={16}
-                        color={contentColor}
-                      />
-                    )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.slotToggleName,
-                      {
-                        color: contentColor,
-                        fontWeight: isSelected ? "600" : "500",
-                      },
-                    ]}
-                  >
-                    {slot.name}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Main circle */}
+        {/* Main circle — the hero. Which slot is shown is named just above it,
+            and the dot row below doubles as today's progress + navigator. */}
         <View style={styles.circleContainer}>
-          <View style={styles.circleWrapper}>
+          {selectedSlot && (
+            <Text style={[styles.slotTitle, { color: colors.text }]}>
+              {selectedSlot.name}
+            </Text>
+          )}
+          <View style={styles.circleWrapper} {...panResponder.panHandlers}>
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <TouchableOpacity
                 style={[
@@ -446,6 +404,42 @@ export default function MainScreen() {
               </Text>
             </TouchableOpacity>
           )}
+
+          {/* Dot indicator = today's progress + slot navigator, in time order.
+              Green fill means "taken" (and nothing else); the current slot is
+              shown by size + a neutral ring, never by color. */}
+          {sortedSlots.length > 1 && (
+            <View style={styles.dotRow}>
+              {sortedSlots.map((slot, i) => {
+                const taken = isSlotCompleted(slot.id);
+                const isCurrent = i === currentIndex;
+                return (
+                  <TouchableOpacity
+                    key={slot.id}
+                    onPress={() => selectByIndex(i)}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                    accessibilityLabel={`${slot.name}${taken ? " 먹음" : ""}`}
+                  >
+                    <View
+                      style={[
+                        styles.dot,
+                        {
+                          backgroundColor: taken
+                            ? colors.greenDark
+                            : "transparent",
+                          borderColor: taken ? colors.greenDark : colors.border,
+                        },
+                        isCurrent && [
+                          styles.dotCurrent,
+                          { borderColor: colors.uncheckedBorder },
+                        ],
+                      ]}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
 
         {/* Summary */}
@@ -496,6 +490,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
+  headerTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
@@ -517,28 +516,28 @@ const styles = StyleSheet.create({
   settingsButton: {
     padding: 4,
   },
-  slotToggles: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 32,
+  slotTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 20,
   },
-  slotToggle: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  slotToggleContent: {
+  dotRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    justifyContent: "center",
+    gap: 14,
+    marginTop: 28,
   },
-  slotIconBox: {
-    width: 18,
-    alignItems: "center",
+  dot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    borderWidth: 1.5,
   },
-  slotToggleName: {
-    fontSize: 15,
+  dotCurrent: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   circleContainer: {
     flex: 1,

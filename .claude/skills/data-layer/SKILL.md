@@ -1,6 +1,6 @@
 ---
 name: data-layer
-description: 먹었다 앱의 데이터·저장·도메인 로직을 다룰 때 참고. 데이터 모델(DoseSlot, DoseLog)과 동기화 대비 규칙, MedRepository 인터페이스와 로컬/클라우드 구현, 탭 정렬 규칙, 활성 탭 선택(pickActive), 연속 기록(streak) 계산. 저장·상태·복용 로그·정렬·통계 관련 작업 시 참고.
+description: 먹었다 앱의 데이터·저장·도메인 로직을 다룰 때 참고. 데이터 모델(DoseSlot, DoseLog)과 동기화 대비 규칙, MedRepository 인터페이스와 로컬/클라우드 구현, 슬롯 정렬 규칙, 활성 슬롯 선택(pickActive), 연속 기록(streak) 계산. 저장·상태·복용 로그·정렬·통계 관련 작업 시 참고.
 ---
 
 # 먹었다 — 데이터 레이어
@@ -49,9 +49,9 @@ interface MedRepository {
 - 지금은 `LocalRepository`(react-native-mmkv, JSON 직렬화)만 사용.
 - 클라우드 단계가 오면 `CloudRepository`로 드롭인(UI 무변경). 오프라인 우선 동기화 엔진(PowerSync/Legend-State 등) 또는 Supabase 중 택. **Repository만 잘 유지하면 이 결정은 미뤄도 된다.**
 
-## 탭 정렬 규칙
+## 슬롯 정렬 규칙
 
-수동 순서를 저장하지 않는다. **시간이 순서를 정한다.** 항상 아래로 정렬해서 표시하고, 새 슬롯은 시간에 맞는 자리에 자동 삽입된다.
+수동 순서를 저장하지 않는다. **시간이 순서를 정한다.** 항상 아래로 정렬해서 표시하고(큰 원 아래 점 인디케이터 순서도 이걸 따른다), 새 슬롯은 시간에 맞는 자리에 자동 삽입된다.
 
 1. `start` 오름차순
 2. 같으면 → `end` 오름차순
@@ -69,9 +69,9 @@ slots.sort(
 );
 ```
 
-## 활성 탭 선택 (pickActive)
+## 활성 슬롯 선택 (pickActive)
 
-앱을 켜면 현재 시각에 해당하는 항목이 자동 선택된다.
+앱을 켜면 현재 시각에 해당하는 항목이 자동 선택돼 큰 원에 뜬다.
 
 1. `start ≤ now ≤ end`인 항목이 있으면 그 항목
 2. 없으면 아직 안 온 항목 중 `start`가 가장 가까운 것(다음 차례)

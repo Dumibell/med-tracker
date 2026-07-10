@@ -264,7 +264,6 @@ export default function MainScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
-            <LogoSymbol size={26} color={colors.greenDark} />
             <Text style={[styles.headerTitle, { color: colors.text }]}>
               먹었다
             </Text>

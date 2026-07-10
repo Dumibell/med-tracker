@@ -325,28 +325,45 @@ export default function MainScreen() {
                       size={52}
                       color={colors.greenDark}
                     />
-                    {selectedEntry?.at && (
-                      <>
-                        <Text
-                          style={[
-                            styles.circleTakenTime,
-                            { color: colors.greenDark },
-                          ]}
-                        >
-                          {formatTimeDisplay(selectedEntry.at)}에 먹음
-                        </Text>
-                        {formatRelativeTime(selectedEntry.at) !== "" && (
+                    {selectedEntry?.at &&
+                      (() => {
+                        // "언제 먹었나"에 바로 답하는 상대시간을 주인공으로,
+                        // 절대시각은 신뢰할 수 있는 앵커로 아래 작게. 24시간이
+                        // 지나 상대시간이 비면 절대시각이 자동으로 주 정보가 된다.
+                        const relative = formatRelativeTime(selectedEntry.at);
+                        const absolute = `${formatTimeDisplay(
+                          selectedEntry.at,
+                        )}에 먹음`;
+                        return relative ? (
+                          <>
+                            <Text
+                              style={[
+                                styles.circleTakenPrimary,
+                                { color: colors.greenDark },
+                              ]}
+                            >
+                              {relative}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.circleTakenSecondary,
+                                { color: colors.textSecondary },
+                              ]}
+                            >
+                              {absolute}
+                            </Text>
+                          </>
+                        ) : (
                           <Text
                             style={[
-                              styles.circleTakenRelative,
-                              { color: colors.textSecondary },
+                              styles.circleTakenPrimary,
+                              { color: colors.greenDark },
                             ]}
                           >
-                            {formatRelativeTime(selectedEntry.at)}
+                            {absolute}
                           </Text>
-                        )}
-                      </>
-                    )}
+                        );
+                      })()}
                   </View>
                 ) : (
                   <>
@@ -587,15 +604,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
   },
-  circleTakenTime: {
+  circleTakenPrimary: {
     marginTop: 6,
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
     textAlign: "center",
   },
-  circleTakenRelative: {
+  circleTakenSecondary: {
     marginTop: 2,
     fontSize: 12,
+    textAlign: "center",
   },
   circleFooter: {
     height: 64,

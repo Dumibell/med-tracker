@@ -18,11 +18,16 @@ export function TimeEditModal({
 }: Props) {
   const colors = useColors();
   const [tempTime, setTempTime] = useState({ hours: 0, minutes: 0 });
+  // 미래 시각은 고를 수 없다(약을 아직 안 온 시각에 먹을 수는 없으므로).
+  // 모달이 열리는 순간의 "지금"을 상한으로 고정한다.
+  const [maxTime, setMaxTime] = useState({ hours: 23, minutes: 59 });
 
   useEffect(() => {
     if (visible) {
       const [hours, minutes] = initialTime.split(":").map(Number);
       setTempTime({ hours, minutes });
+      const now = new Date();
+      setMaxTime({ hours: now.getHours(), minutes: now.getMinutes() });
     }
   }, [visible, initialTime]);
 
@@ -33,8 +38,10 @@ export function TimeEditModal({
     onConfirm(timeStr);
   };
 
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const hours = Array.from({ length: maxTime.hours + 1 }, (_, i) => i);
+  // 현재 시각의 '시'를 골랐을 땐 분도 '현재 분'까지만 노출.
+  const minuteLimit = tempTime.hours >= maxTime.hours ? maxTime.minutes : 59;
+  const minutes = Array.from({ length: minuteLimit + 1 }, (_, i) => i);
 
   return (
     <Modal
@@ -69,7 +76,13 @@ export function TimeEditModal({
             <Picker
               selectedValue={tempTime.hours}
               onValueChange={(value) =>
-                setTempTime((prev) => ({ ...prev, hours: value }))
+                setTempTime((prev) => ({
+                  hours: value,
+                  minutes:
+                    value >= maxTime.hours && prev.minutes > maxTime.minutes
+                      ? maxTime.minutes
+                      : prev.minutes,
+                }))
               }
               style={styles.picker}
               itemStyle={{ color: colors.text }}

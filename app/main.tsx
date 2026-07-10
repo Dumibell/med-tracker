@@ -374,36 +374,40 @@ export default function MainScreen() {
             />
           </View>
 
-          <Text
-            style={[
-              styles.circleLabel,
-              {
-                color: isSelectedCompleted
-                  ? colors.greenDark
-                  : colors.textSecondary,
-              },
-            ]}
-          >
-            {isSelectedCompleted && selectedEntry?.at
-              ? (() => {
-                  const relative = formatRelativeTime(selectedEntry.at);
-                  const relativeSuffix = relative ? ` (${relative})` : "";
-                  return `${formatTimeDisplay(
-                    selectedEntry.at,
-                  )}에 먹음${relativeSuffix} · 다시 탭하면 취소`;
-                })()
-              : "탭하여 체크"}
-          </Text>
+          {/* Fixed-height so the circle above never shifts when the taken
+              state adds the "시각 수정" link (and a longer label). */}
+          <View style={styles.circleFooter}>
+            <Text
+              style={[
+                styles.circleLabel,
+                {
+                  color: isSelectedCompleted
+                    ? colors.greenDark
+                    : colors.textSecondary,
+                },
+              ]}
+            >
+              {isSelectedCompleted && selectedEntry?.at
+                ? (() => {
+                    const relative = formatRelativeTime(selectedEntry.at);
+                    const relativeSuffix = relative ? ` (${relative})` : "";
+                    return `${formatTimeDisplay(
+                      selectedEntry.at,
+                    )}에 먹음${relativeSuffix} · 다시 탭하면 취소`;
+                  })()
+                : "탭하여 체크"}
+            </Text>
 
-          {isSelectedCompleted && (
-            <TouchableOpacity onPress={() => setTimeEditVisible(true)}>
-              <Text
-                style={[styles.timeEditLink, { color: colors.textSecondary }]}
-              >
-                시각 수정
-              </Text>
-            </TouchableOpacity>
-          )}
+            {isSelectedCompleted && (
+              <TouchableOpacity onPress={() => setTimeEditVisible(true)}>
+                <Text
+                  style={[styles.timeEditLink, { color: colors.textSecondary }]}
+                >
+                  시각 수정
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           {/* Dot indicator = today's progress + slot navigator, in time order.
               Green fill means "taken" (and nothing else); the current slot is
@@ -569,9 +573,15 @@ const styles = StyleSheet.create({
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
   },
+  circleFooter: {
+    height: 64,
+    alignItems: "center",
+    overflow: "hidden",
+  },
   circleLabel: {
     marginTop: 16,
     fontSize: 14,
+    textAlign: "center",
   },
   timeEditLink: {
     marginTop: 8,

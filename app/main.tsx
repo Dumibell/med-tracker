@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import Svg, { Circle } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import { useSlots, useTodayLog, useStreak, useColors } from "../src/hooks";
 import { LogoSymbol, TimeEditModal } from "../src/components";
@@ -30,6 +31,11 @@ import {
 } from "../src/utils/time";
 
 const CIRCLE_SIZE = 180;
+const RING_STROKE_WIDTH = 4;
+const RING_RADIUS = (CIRCLE_SIZE - RING_STROKE_WIDTH) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function MainScreen() {
   const router = useRouter();
@@ -41,7 +47,8 @@ export default function MainScreen() {
 
   const [selectedSlot, setSelectedSlot] = useState<DoseSlot | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
-  const [pulseAnim] = useState(new Animated.Value(0));
+  const [sweepAnim] = useState(new Animated.Value(0));
+  const [flashAnim] = useState(new Animated.Value(0));
   const [timeEditVisible, setTimeEditVisible] = useState(false);
 
   // Auto-select active slot on load
@@ -51,6 +58,15 @@ export default function MainScreen() {
       setSelectedSlot(active);
     }
   }, [slots, selectedSlot]);
+
+  // Snap the ring to the right state when switching slots (no sweep here —
+  // the sweep is reserved for the actual check/uncheck tap).
+  useEffect(() => {
+    if (!selectedSlot) return;
+    const taken = log?.entries[selectedSlot.id]?.taken ?? false;
+    sweepAnim.setValue(taken ? 1 : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSlot?.id]);
 
   // Refresh data whenever this screen regains focus (e.g. returning from settings)
   useFocusEffect(
@@ -87,8 +103,16 @@ export default function MainScreen() {
       }),
     ]).start();
 
+    // Ring just disappears — no reverse sweep, this is a plain correction
+    Animated.timing(sweepAnim, {
+      toValue: 0,
+      duration: 120,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start();
+
     await toggleDose(selectedSlot.id);
-  }, [selectedSlot, toggleDose, scaleAnim]);
+  }, [selectedSlot, toggleDose, scaleAnim, sweepAnim]);
 
   const handleCircleTap = useCallback(async () => {
     if (!selectedSlot) return;
@@ -97,7 +121,8 @@ export default function MainScreen() {
     const willCheck = !(currentEntry?.taken ?? false);
 
     if (willCheck) {
-      // Check: crisp and rewarding — success haptic, overshoot pop, ring pulse
+      // Check: crisp and rewarding — success haptic, overshoot pop,
+      // border sweeps around once, then a quick flash when it lands
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       Animated.sequence([
@@ -114,13 +139,27 @@ export default function MainScreen() {
         }),
       ]).start();
 
-      pulseAnim.setValue(0);
-      Animated.timing(pulseAnim, {
+      sweepAnim.setValue(0);
+      Animated.timing(sweepAnim, {
         toValue: 1,
-        duration: 500,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }).start();
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start(() => {
+        flashAnim.setValue(0);
+        Animated.sequence([
+          Animated.timing(flashAnim, {
+            toValue: 1,
+            duration: 90,
+            useNativeDriver: true,
+          }),
+          Animated.timing(flashAnim, {
+            toValue: 0,
+            duration: 160,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
 
       await toggleDose(selectedSlot.id);
       return;
@@ -130,14 +169,24 @@ export default function MainScreen() {
     Alert.alert(
       "취소하시겠어요?",
       currentEntry?.at
-        ? `이미 ${formatTimeDisplay(currentEntry.at)}에 드셨어요. 취소하시겠어요?`
+        ? `이미 ${formatTimeDisplay(
+            currentEntry.at,
+          )}에 드셨어요. 취소하시겠어요?`
         : "이미 체크된 항목이에요. 취소하시겠어요?",
       [
         { text: "아니요", style: "cancel" },
         { text: "취소할게요", style: "destructive", onPress: performUncheck },
       ],
     );
-  }, [selectedSlot, toggleDose, scaleAnim, pulseAnim, log, performUncheck]);
+  }, [
+    selectedSlot,
+    toggleDose,
+    scaleAnim,
+    sweepAnim,
+    flashAnim,
+    log,
+    performUncheck,
+  ]);
 
   const handleTimeEditConfirm = useCallback(
     async (time: string) => {
@@ -203,10 +252,7 @@ export default function MainScreen() {
           <View style={styles.headerRight}>
             {streak > 0 && (
               <View
-                style={[
-                  styles.streakPill,
-                  { backgroundColor: colors.surface },
-                ]}
+                style={[styles.streakPill, { backgroundColor: colors.surface }]}
               >
                 <Text
                   style={[styles.streakText, { color: colors.textSecondary }]}
@@ -236,48 +282,57 @@ export default function MainScreen() {
             const isSelected = selectedSlot?.id === slot.id;
             const isCompleted = isSlotCompleted(slot.id);
 
-            let backgroundColor: string;
-            let borderColor: string;
-            let contentColor: string;
-
-            if (isCompleted) {
-              backgroundColor = "transparent";
-              contentColor = colors.greenDark;
-              borderColor = colors.greenDark;
-            } else if (isSelected) {
-              backgroundColor = colors.surface;
-              borderColor = colors.textSecondary;
-              contentColor = colors.text;
-            } else {
-              backgroundColor = "transparent";
-              borderColor = colors.border;
-              contentColor = colors.textSecondary;
-            }
+            // Two independent axes — never fold them into one branch:
+            // selection = bolder border + bold text/icon, taken = green
+            // check/text/border color. Green means "taken" and nothing else.
+            const contentColor = isCompleted
+              ? colors.greenDark
+              : isSelected
+                ? colors.text
+                : colors.textSecondary;
 
             return (
               <TouchableOpacity
                 key={slot.id}
                 style={[
                   styles.slotToggle,
-                  { backgroundColor, borderColor },
-                  isCompleted && styles.slotToggleTaken,
+                  {
+                    borderColor: isCompleted ? colors.greenLight : colors.border,
+                    borderWidth: isSelected ? 2 : 1.5,
+                  },
                 ]}
                 onPress={() => setSelectedSlot(slot)}
               >
                 <View style={styles.slotToggleContent}>
                   <View style={styles.slotIconBox}>
-                    <Ionicons
-                      name={isCompleted ? "checkmark" : getIconName(slot.start)}
-                      size={16}
-                      color={contentColor}
-                    />
+                    {isCompleted ? (
+                      isSelected ? (
+                        <MaterialCommunityIcons
+                          name="check-bold"
+                          size={16}
+                          color={contentColor}
+                        />
+                      ) : (
+                        <Ionicons
+                          name="checkmark"
+                          size={16}
+                          color={contentColor}
+                        />
+                      )
+                    ) : (
+                      <Ionicons
+                        name={getIconName(slot.start)}
+                        size={16}
+                        color={contentColor}
+                      />
+                    )}
                   </View>
                   <Text
                     style={[
                       styles.slotToggleName,
                       {
                         color: contentColor,
-                        fontWeight: isCompleted ? "600" : "500",
+                        fontWeight: isSelected ? "600" : "500",
                       },
                     ]}
                   >
@@ -292,60 +347,73 @@ export default function MainScreen() {
         {/* Main circle */}
         <View style={styles.circleContainer}>
           <View style={styles.circleWrapper}>
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                styles.pulseRing,
-                {
-                  borderColor: colors.greenDark,
-                  opacity: pulseAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.5, 0],
-                  }),
-                  transform: [
-                    {
-                      scale: pulseAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 1.4],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            />
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <TouchableOpacity
-              style={[
-                styles.mainCircle,
-                {
-                  backgroundColor: isSelectedCompleted
-                    ? colors.greenDark
-                    : "transparent",
-                  borderColor: isSelectedCompleted
-                    ? colors.greenDark
-                    : colors.uncheckedBorder,
-                },
-              ]}
-              onPress={handleCircleTap}
-              activeOpacity={0.8}
-            >
-              {isSelectedCompleted ? (
-                <>
+                style={[
+                  styles.mainCircle,
+                  {
+                    borderColor: isSelectedCompleted
+                      ? "transparent"
+                      : colors.uncheckedBorder,
+                  },
+                ]}
+                onPress={handleCircleTap}
+                activeOpacity={0.8}
+              >
+                {isSelectedCompleted ? (
                   <Ionicons
                     name="checkmark"
                     size={76}
-                    color={colors.greenText}
+                    color={colors.greenDark}
                   />
-                </>
-              ) : (
-                <>
-                  {selectedSlot && (
-                    <LogoSymbol size={60} color={colors.textSecondary} />
-                  )}
-                </>
-              )}
-            </TouchableOpacity>
+                ) : (
+                  <>
+                    {selectedSlot && (
+                      <LogoSymbol size={60} color={colors.textSecondary} />
+                    )}
+                  </>
+                )}
+              </TouchableOpacity>
             </Animated.View>
+
+            {/* Green ring sweeps in on check, disappears on uncheck */}
+            <Svg
+              width={CIRCLE_SIZE}
+              height={CIRCLE_SIZE}
+              style={styles.ringOverlay}
+              pointerEvents="none"
+            >
+              <AnimatedCircle
+                cx={CIRCLE_SIZE / 2}
+                cy={CIRCLE_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={colors.greenDark}
+                strokeWidth={RING_STROKE_WIDTH}
+                fill="none"
+                strokeLinecap="round"
+                transform={`rotate(-90 ${CIRCLE_SIZE / 2} ${CIRCLE_SIZE / 2})`}
+                strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
+                strokeDashoffset={sweepAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [RING_CIRCUMFERENCE, 0],
+                })}
+              />
+            </Svg>
+
+            {/* Quick flash right as the ring finishes sweeping */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.flashOverlay,
+                {
+                  backgroundColor: colors.greenDark,
+                  opacity: flashAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 0.35],
+                  }),
+                },
+              ]}
+            />
           </View>
 
           <Text
@@ -371,7 +439,9 @@ export default function MainScreen() {
 
           {isSelectedCompleted && (
             <TouchableOpacity onPress={() => setTimeEditVisible(true)}>
-              <Text style={[styles.timeEditLink, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.timeEditLink, { color: colors.textSecondary }]}
+              >
                 시각 수정
               </Text>
             </TouchableOpacity>
@@ -388,9 +458,13 @@ export default function MainScreen() {
         visible={timeEditVisible}
         initialTime={
           selectedEntry?.at
-            ? `${String(new Date(selectedEntry.at).getHours()).padStart(2, "0")}:${String(
-                new Date(selectedEntry.at).getMinutes(),
-              ).padStart(2, "0")}`
+            ? `${String(new Date(selectedEntry.at).getHours()).padStart(
+                2,
+                "0",
+              )}:${String(new Date(selectedEntry.at).getMinutes()).padStart(
+                2,
+                "0",
+              )}`
             : "00:00"
         }
         onConfirm={handleTimeEditConfirm}
@@ -453,10 +527,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    borderWidth: 1.5,
-  },
-  slotToggleTaken: {
-    opacity: 0.8,
   },
   slotToggleContent: {
     flexDirection: "row",
@@ -481,13 +551,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  pulseRing: {
-    position: "absolute",
-    width: CIRCLE_SIZE,
-    height: CIRCLE_SIZE,
-    borderRadius: CIRCLE_SIZE / 2,
-    borderWidth: 2,
-  },
   mainCircle: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
@@ -495,6 +558,17 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     justifyContent: "center",
     alignItems: "center",
+  },
+  ringOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
+  flashOverlay: {
+    position: "absolute",
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
   },
   circleLabel: {
     marginTop: 16,

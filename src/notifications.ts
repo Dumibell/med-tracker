@@ -1,6 +1,6 @@
-import * as Notifications from 'expo-notifications';
-import type { DoseSlot, DoseLog } from './types';
-import { timeToMinutes, getCurrentMinutes } from './utils/time';
+import * as Notifications from "expo-notifications";
+import type { DoseSlot, DoseLog } from "./types";
+import { timeToMinutes, getCurrentMinutes } from "./utils/time";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,10 +13,10 @@ Notifications.setNotificationHandler({
 
 export async function requestNotificationPermission(): Promise<boolean> {
   const { status } = await Notifications.getPermissionsAsync();
-  if (status === 'granted') return true;
+  if (status === "granted") return true;
 
   const { status: requested } = await Notifications.requestPermissionsAsync();
-  return requested === 'granted';
+  return requested === "granted";
 }
 
 /**
@@ -48,8 +48,8 @@ export async function reconcileTodayReminders(
 
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: '먹었다',
-        body: `오늘 ${slot.name} 약, 아직 체크 안 됐어요.`,
+        title: "먹었다",
+        body: `💊 오늘 ${slot.name} 약, 아직 안먹었어요`,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,

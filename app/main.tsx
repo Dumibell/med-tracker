@@ -90,6 +90,17 @@ export default function MainScreen() {
     }
   }, [slots, selectedSlot]);
 
+  // Keep the selected slot pointing at the *latest* object whenever slots
+  // refresh (e.g. returning from settings with a renamed slot). Without this
+  // the title keeps rendering the stale snapshot's name.
+  useEffect(() => {
+    setSelectedSlot((prev) => {
+      if (!prev) return prev;
+      const fresh = slots.find((s) => s.id === prev.id);
+      return fresh ?? pickActiveSlot(slots);
+    });
+  }, [slots]);
+
   // Snap the ring to the right state when switching slots (no sweep here —
   // the sweep is reserved for the actual check/uncheck tap).
   useEffect(() => {

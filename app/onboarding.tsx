@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,19 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useColors, useSlots, useOnboarding } from '../src/hooks';
-import type { DoseSlot } from '../src/types';
-import { generateId, getIconForTime, sortSlotsByTime } from '../src/utils/time';
-import { TimePickerRow } from '../src/components/TimePickerRow';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useColors, useSlots, useOnboarding } from "../src/hooks";
+import type { DoseSlot } from "../src/types";
+import { generateId, getIconForTime, sortSlotsByTime } from "../src/utils/time";
+import { TimePickerRow } from "../src/components/TimePickerRow";
 
-const DEFAULT_SLOTS: Omit<DoseSlot, 'id' | 'updatedAt'>[] = [
-  { name: '아침', start: '07:00', end: '09:00', order: 0 },
-  { name: '저녁', start: '18:00', end: '20:00', order: 1 },
-  { name: '취침 전', start: '22:00', end: '23:00', order: 2 },
+const DEFAULT_SLOTS: Omit<DoseSlot, "id" | "updatedAt">[] = [
+  { name: "아침", start: "07:00", end: "09:00", order: 0 },
+  { name: "저녁", start: "18:00", end: "20:00", order: 1 },
+  { name: "취침 전", start: "22:00", end: "23:00", order: 2 },
 ];
 
 function createDefaultSlot(index: number): DoseSlot {
@@ -36,8 +36,8 @@ function createDefaultSlot(index: number): DoseSlot {
   // Generate sensible defaults for additional slots
   const baseHour = 8 + index * 4;
   const hour = baseHour % 24;
-  const startTime = `${String(hour).padStart(2, '0')}:00`;
-  const endTime = `${String((hour + 2) % 24).padStart(2, '0')}:00`;
+  const startTime = `${String(hour).padStart(2, "0")}:00`;
+  const endTime = `${String((hour + 2) % 24).padStart(2, "0")}:00`;
 
   return {
     id: generateId(),
@@ -52,13 +52,17 @@ function createDefaultSlot(index: number): DoseSlot {
 export default function Onboarding() {
   const router = useRouter();
   const colors = useColors();
-  const { slots: existingSlots, loading: existingSlotsLoading, saveSlots } = useSlots();
+  const {
+    slots: existingSlots,
+    loading: existingSlotsLoading,
+    saveSlots,
+  } = useSlots();
   const { hasCompleted, completeOnboarding } = useOnboarding();
   const isEditingSettings = hasCompleted === true;
 
   const [count, setCount] = useState(3);
   const [slots, setLocalSlots] = useState<DoseSlot[]>(() =>
-    Array.from({ length: 3 }, (_, i) => createDefaultSlot(i))
+    Array.from({ length: 3 }, (_, i) => createDefaultSlot(i)),
   );
   const [hydratedFromExisting, setHydratedFromExisting] = useState(false);
 
@@ -72,24 +76,21 @@ export default function Onboarding() {
     }
   }, [existingSlotsLoading, existingSlots, hydratedFromExisting]);
 
-  const handleCountChange = useCallback(
-    (newCount: number) => {
-      const clamped = Math.max(1, Math.min(10, newCount));
-      setCount(clamped);
+  const handleCountChange = useCallback((newCount: number) => {
+    const clamped = Math.max(1, Math.min(10, newCount));
+    setCount(clamped);
 
-      setLocalSlots((prev) => {
-        if (clamped > prev.length) {
-          const additional = Array.from(
-            { length: clamped - prev.length },
-            (_, i) => createDefaultSlot(prev.length + i)
-          );
-          return [...prev, ...additional];
-        }
-        return prev.slice(0, clamped);
-      });
-    },
-    []
-  );
+    setLocalSlots((prev) => {
+      if (clamped > prev.length) {
+        const additional = Array.from(
+          { length: clamped - prev.length },
+          (_, i) => createDefaultSlot(prev.length + i),
+        );
+        return [...prev, ...additional];
+      }
+      return prev.slice(0, clamped);
+    });
+  }, []);
 
   const handleSlotChange = useCallback(
     (index: number, field: keyof DoseSlot, value: string) => {
@@ -97,11 +98,11 @@ export default function Onboarding() {
         prev.map((slot, i) =>
           i === index
             ? { ...slot, [field]: value, updatedAt: new Date().toISOString() }
-            : slot
-        )
+            : slot,
+        ),
       );
     },
-    []
+    [],
   );
 
   const handleDeleteSlot = useCallback((index: number) => {
@@ -119,29 +120,31 @@ export default function Onboarding() {
       router.back();
     } else {
       await completeOnboarding();
-      router.replace('/main');
+      router.replace("/main");
     }
   };
 
   const getIconName = (startTime: string) => {
     const icon = getIconForTime(startTime);
     switch (icon) {
-      case 'sunrise':
-        return 'sunny-outline';
-      case 'sun':
-        return 'sunny';
-      case 'sunset':
-        return 'partly-sunny-outline';
-      case 'moon':
-        return 'moon-outline';
+      case "sunrise":
+        return "sunny-outline";
+      case "sun":
+        return "sunny";
+      case "sunset":
+        return "partly-sunny-outline";
+      case "moon":
+        return "moon-outline";
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           style={styles.flex}
@@ -157,14 +160,16 @@ export default function Onboarding() {
               <Ionicons name="chevron-back" size={24} color={colors.text} />
             </TouchableOpacity>
           )}
-          <Text style={[styles.header, { color: colors.text }]}>약 알림 설정</Text>
+          <Text style={[styles.header, { color: colors.text }]}>
+            약 알림 설정
+          </Text>
           {!isEditingSettings && (
             <Text style={[styles.tagline, { color: colors.greenDark }]}>
               약 먹었는지 확인하는 가장 빠른 방법
             </Text>
           )}
           <Text style={[styles.subheader, { color: colors.textSecondary }]}>
-            하루에 몇 번 약을 드시나요?{'\n'}각 복용 시간대를 설정해주세요.
+            하루에 몇 번 약을 드시나요?{"\n"}각 복용 시간대를 설정해주세요.
           </Text>
 
           {/* Stepper */}
@@ -224,17 +229,24 @@ export default function Onboarding() {
                 </View>
                 <View style={styles.slotContent}>
                   <TextInput
-                    style={[styles.slotNameInput, { color: colors.text, borderColor: colors.border }]}
+                    style={[
+                      styles.slotNameInput,
+                      { color: colors.text, borderColor: colors.border },
+                    ]}
                     value={slot.name}
-                    onChangeText={(text) => handleSlotChange(index, 'name', text)}
-                    placeholder={`예: ${['아침', '점심', '저녁', '취침 전'][index] || '복용 시간'}`}
+                    onChangeText={(text) =>
+                      handleSlotChange(index, "name", text)
+                    }
+                    placeholder={`예: ${["아침", "점심", "저녁", "취침 전"][index] || "복용 시간"}`}
                     placeholderTextColor={colors.textSecondary}
                   />
                   <TimePickerRow
                     startTime={slot.start}
                     endTime={slot.end}
-                    onStartChange={(time) => handleSlotChange(index, 'start', time)}
-                    onEndChange={(time) => handleSlotChange(index, 'end', time)}
+                    onStartChange={(time) =>
+                      handleSlotChange(index, "start", time)
+                    }
+                    onEndChange={(time) => handleSlotChange(index, "end", time)}
                   />
                 </View>
                 {slots.length > 1 && (
@@ -243,7 +255,11 @@ export default function Onboarding() {
                     onPress={() => handleDeleteSlot(index)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="trash-outline" size={20} color={colors.textSecondary} />
+                    <Ionicons
+                      name="trash-outline"
+                      size={20}
+                      color={colors.textSecondary}
+                    />
                   </TouchableOpacity>
                 )}
               </View>
@@ -263,7 +279,7 @@ export default function Onboarding() {
             onPress={handleStart}
           >
             <Text style={[styles.startButtonText, { color: colors.greenText }]}>
-              {isEditingSettings ? '저장하기' : '시작하기'}
+              {isEditingSettings ? "저장하기" : "시작하기"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -285,16 +301,16 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   header: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
   },
   tagline: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
   },
   subheader: {
@@ -303,41 +319,41 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   stepperContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 32,
   },
   stepperLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   stepperButton: {
     width: 44,
     height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   stepperInput: {
     width: 50,
     height: 44,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   slotsContainer: {
     gap: 16,
   },
   slotRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     padding: 16,
     borderWidth: 1,
     borderRadius: 12,
@@ -345,8 +361,8 @@ const styles = StyleSheet.create({
   slotIconContainer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   slotContent: {
@@ -359,14 +375,14 @@ const styles = StyleSheet.create({
   },
   slotNameInput: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderRadius: 8,
   },
   bottomContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -377,11 +393,11 @@ const styles = StyleSheet.create({
   startButton: {
     height: 52,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   startButtonText: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

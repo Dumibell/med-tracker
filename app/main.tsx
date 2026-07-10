@@ -435,9 +435,7 @@ export default function MainScreen() {
           {/* Fixed-height so the circle above never shifts when the taken
               state adds the "시각 수정" link (and a longer label). */}
           <View style={styles.circleFooter}>
-            <Text
-              style={[styles.circleLabel, { color: colors.textSecondary }]}
-            >
+            <Text style={[styles.circleLabel, { color: colors.textSecondary }]}>
               {isSelectedCompleted ? "다시 탭하면 취소" : "탭하여 체크"}
             </Text>
 

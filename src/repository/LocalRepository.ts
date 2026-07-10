@@ -1,9 +1,9 @@
-import type { DoseSlot, DoseLog, MedRepository } from '../types';
+import type { DoseSlot, DoseLog, MedRepository } from "../types";
 
 const KEYS = {
-  SLOTS: 'med_slots',
-  ONBOARDING_COMPLETE: 'onboarding_complete',
-  LOG_PREFIX: 'log_', // log_YYYY-MM-DD
+  SLOTS: "med_slots",
+  ONBOARDING_COMPLETE: "onboarding_complete",
+  LOG_PREFIX: "log_", // log_YYYY-MM-DD
 } as const;
 
 // Lazy-load MMKV to avoid issues with native modules during type checking
@@ -11,8 +11,8 @@ let mmkvInstance: any = null;
 
 function getStorage() {
   if (!mmkvInstance) {
-    const { createMMKV } = require('react-native-mmkv');
-    mmkvInstance = createMMKV({ id: 'med-tracker-storage' });
+    const { createMMKV } = require("react-native-mmkv");
+    mmkvInstance = createMMKV({ id: "med-tracker-storage" });
   }
   return mmkvInstance;
 }
@@ -29,7 +29,9 @@ export class LocalRepository implements MedRepository {
     try {
       const slots: DoseSlot[] = JSON.parse(data);
       // Filter out soft-deleted slots for normal use
-      return slots.filter((slot) => !slot.deletedAt).sort((a, b) => a.order - b.order);
+      return slots
+        .filter((slot) => !slot.deletedAt)
+        .sort((a, b) => a.order - b.order);
     } catch {
       return [];
     }
@@ -74,7 +76,7 @@ export class LocalRepository implements MedRepository {
     date: string,
     slotId: string,
     taken: boolean,
-    at?: string
+    at?: string,
   ): Promise<void> {
     const key = `${KEYS.LOG_PREFIX}${date}`;
     let log = await this.getLog(date);
@@ -124,8 +126,8 @@ export class LocalRepository implements MedRepository {
 
   private formatDate(date: Date): string {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
 }

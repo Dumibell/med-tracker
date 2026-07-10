@@ -1,2 +1,2 @@
-export { LocalRepository, repository } from './LocalRepository';
-export type { MedRepository } from '../types';
+export { LocalRepository, repository } from "./LocalRepository";
+export type { MedRepository } from "../types";

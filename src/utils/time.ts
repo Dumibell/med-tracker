@@ -1,4 +1,4 @@
-import type { DoseSlot, DoseLog } from '../types';
+import type { DoseSlot, DoseLog } from "../types";
 
 /**
  * Get icon name based on start hour
@@ -7,20 +7,22 @@ import type { DoseSlot, DoseLog } from '../types';
  * 16 ≤ h < 21 → sunset
  * else → moon
  */
-export function getIconForTime(startTime: string): 'sunrise' | 'sun' | 'sunset' | 'moon' {
-  const hour = parseInt(startTime.split(':')[0], 10);
+export function getIconForTime(
+  startTime: string,
+): "sunrise" | "sun" | "sunset" | "moon" {
+  const hour = parseInt(startTime.split(":")[0], 10);
 
-  if (hour >= 5 && hour < 11) return 'sunrise';
-  if (hour >= 11 && hour < 16) return 'sun';
-  if (hour >= 16 && hour < 21) return 'sunset';
-  return 'moon';
+  if (hour >= 5 && hour < 11) return "sunrise";
+  if (hour >= 11 && hour < 16) return "sun";
+  if (hour >= 16 && hour < 21) return "sunset";
+  return "moon";
 }
 
 /**
  * Convert time string "HH:MM" to minutes since midnight
  */
 export function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
@@ -37,7 +39,9 @@ export function getCurrentMinutes(): number {
  * start time keep their relative (insertion) order.
  */
 export function sortSlotsByTime(slots: DoseSlot[]): DoseSlot[] {
-  return [...slots].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+  return [...slots].sort(
+    (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start),
+  );
 }
 
 /**
@@ -87,8 +91,8 @@ export function getTodayDate(): string {
  */
 export function formatDate(date: Date): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -99,9 +103,9 @@ export function formatTimeDisplay(isoString: string): string {
   const date = new Date(isoString);
   const hours = date.getHours();
   const minutes = date.getMinutes();
-  const period = hours < 12 ? '오전' : '오후';
+  const period = hours < 12 ? "오전" : "오후";
   const displayHours = hours % 12 || 12;
-  const displayMinutes = String(minutes).padStart(2, '0');
+  const displayMinutes = String(minutes).padStart(2, "0");
   return `${period} ${displayHours}:${displayMinutes}`;
 }
 
@@ -110,18 +114,21 @@ export function formatTimeDisplay(isoString: string): string {
  * string (e.g. "2시간 전"). Returns "" once the gap exceeds a day, since
  * this is only meant for "먹은 지 얼마나 됐지?" on today's log.
  */
-export function formatRelativeTime(isoString: string, now: Date = new Date()): string {
+export function formatRelativeTime(
+  isoString: string,
+  now: Date = new Date(),
+): string {
   const then = new Date(isoString);
   const diffMs = now.getTime() - then.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (diffMinutes < 1) return '방금 전';
+  if (diffMinutes < 1) return "방금 전";
   if (diffMinutes < 60) return `${diffMinutes}분 전`;
 
   const diffHours = Math.floor(diffMinutes / 60);
   if (diffHours < 24) return `${diffHours}시간 전`;
 
-  return '';
+  return "";
 }
 
 /**
@@ -131,12 +138,14 @@ export function formatRelativeTime(isoString: string, now: Date = new Date()): s
 export function calculateStreak(
   logs: DoseLog[],
   slots: DoseSlot[],
-  today: string
+  today: string,
 ): number {
   if (slots.length === 0) return 0;
 
   const logMap = new Map(logs.map((log) => [log.date, log]));
-  const activeSlotIds = new Set(slots.filter((s) => !s.deletedAt).map((s) => s.id));
+  const activeSlotIds = new Set(
+    slots.filter((s) => !s.deletedAt).map((s) => s.id),
+  );
 
   const isComplete = (date: string): boolean => {
     const log = logMap.get(date);
@@ -181,22 +190,22 @@ export function calculateStreak(
  */
 export function getCalendarColorBucket(
   completed: number,
-  total: number
-): 'empty' | 'light' | 'medium' | 'full' {
-  if (total === 0 || completed === 0) return 'empty';
+  total: number,
+): "empty" | "light" | "medium" | "full" {
+  if (total === 0 || completed === 0) return "empty";
   const ratio = completed / total;
-  if (ratio >= 1) return 'full';
-  if (ratio >= 0.5) return 'medium';
-  return 'light';
+  if (ratio >= 1) return "full";
+  if (ratio >= 0.5) return "medium";
+  return "light";
 }
 
 /**
  * Generate a UUID v4
  */
 export function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }

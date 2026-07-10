@@ -1,18 +1,28 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useColors, useCalendarData } from '../hooks';
-import type { DoseSlot } from '../types';
-import { formatDate, getCalendarColorBucket } from '../utils/time';
+import { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useColors, useCalendarData } from "../hooks";
+import type { DoseSlot } from "../types";
+import { formatDate, getCalendarColorBucket } from "../utils/time";
 
 type Props = {
   slots: DoseSlot[];
 };
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTHS = [
-  '1월', '2월', '3월', '4월', '5월', '6월',
-  '7월', '8월', '9월', '10월', '11월', '12월',
+  "1월",
+  "2월",
+  "3월",
+  "4월",
+  "5월",
+  "6월",
+  "7월",
+  "8월",
+  "9월",
+  "10월",
+  "11월",
+  "12월",
 ];
 
 export function Calendar({ slots }: Props) {
@@ -49,16 +59,16 @@ export function Calendar({ slots }: Props) {
     }
   };
 
-  const getColorForBucket = (bucket: 'empty' | 'light' | 'medium' | 'full') => {
+  const getColorForBucket = (bucket: "empty" | "light" | "medium" | "full") => {
     switch (bucket) {
-      case 'full':
+      case "full":
         return colors.greenDark;
-      case 'medium':
+      case "medium":
         return colors.greenMedium;
-      case 'light':
+      case "light":
         return colors.greenLight;
       default:
-        return 'transparent';
+        return "transparent";
     }
   };
 
@@ -103,7 +113,12 @@ export function Calendar({ slots }: Props) {
               style={[
                 styles.weekdayText,
                 {
-                  color: i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : colors.textSecondary,
+                  color:
+                    i === 0
+                      ? "#EF4444"
+                      : i === 6
+                        ? "#3B82F6"
+                        : colors.textSecondary,
                 },
               ]}
             >
@@ -121,11 +136,11 @@ export function Calendar({ slots }: Props) {
               return <View key={cellIndex} style={styles.cell} />;
             }
 
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const dayData = data.get(dateStr);
             const bucket = dayData
               ? getCalendarColorBucket(dayData.completed, dayData.total)
-              : 'empty';
+              : "empty";
             const bgColor = getColorForBucket(bucket);
             const isToday = dateStr === todayStr;
             const isSunday = cellIndex === 0;
@@ -139,7 +154,7 @@ export function Calendar({ slots }: Props) {
                     {
                       backgroundColor: bgColor,
                       borderWidth: isToday ? 2 : 0,
-                      borderColor: isToday ? colors.greenDark : 'transparent',
+                      borderColor: isToday ? colors.greenDark : "transparent",
                     },
                   ]}
                 >
@@ -148,13 +163,13 @@ export function Calendar({ slots }: Props) {
                       styles.dayText,
                       {
                         color:
-                          bucket === 'full'
+                          bucket === "full"
                             ? colors.greenText
                             : isSunday
-                            ? '#EF4444'
-                            : isSaturday
-                            ? '#3B82F6'
-                            : colors.text,
+                              ? "#EF4444"
+                              : isSaturday
+                                ? "#3B82F6"
+                                : colors.text,
                       },
                     ]}
                   >
@@ -170,16 +185,28 @@ export function Calendar({ slots }: Props) {
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.greenLight }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>일부</Text>
+          <View
+            style={[styles.legendDot, { backgroundColor: colors.greenLight }]}
+          />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+            일부
+          </Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.greenMedium }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>절반 이상</Text>
+          <View
+            style={[styles.legendDot, { backgroundColor: colors.greenMedium }]}
+          />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+            절반 이상
+          </Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.greenDark }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>완료</Text>
+          <View
+            style={[styles.legendDot, { backgroundColor: colors.greenDark }]}
+          />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+            완료
+          </Text>
         </View>
       </View>
     </View>
@@ -193,9 +220,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   navButton: {
@@ -203,54 +230,54 @@ const styles = StyleSheet.create({
   },
   monthTitle: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   weekdayRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
   weekdayCell: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 4,
   },
   weekdayText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   cell: {
     flex: 1,
     aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 2,
   },
   dayCircle: {
-    width: '85%',
+    width: "85%",
     aspectRatio: 1,
     borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   dayText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 16,
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: "#E5E7EB",
   },
   legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   legendDot: {

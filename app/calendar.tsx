@@ -1,9 +1,15 @@
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useColors, useSlots } from '../src/hooks';
-import { Calendar } from '../src/components/Calendar';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useColors, useSlots } from "../src/hooks";
+import { Calendar } from "../src/components/Calendar";
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -11,7 +17,9 @@ export default function CalendarScreen() {
   const { slots } = useSlots();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity
           style={styles.backButton}
@@ -36,11 +44,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   header: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 20,
   },
 });

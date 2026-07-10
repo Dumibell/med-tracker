@@ -24,7 +24,12 @@ export interface MedRepository {
   saveSlots(slots: DoseSlot[]): Promise<void>;
 
   getLog(date: string): Promise<DoseLog | null>;
-  setDose(date: string, slotId: string, taken: boolean, at?: string): Promise<void>;
+  setDose(
+    date: string,
+    slotId: string,
+    taken: boolean,
+    at?: string,
+  ): Promise<void>;
 
   getRange(startDate: string, endDate: string): Promise<DoseLog[]>;
 

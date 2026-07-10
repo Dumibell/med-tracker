@@ -4,5 +4,5 @@ export {
   useStreak,
   useOnboarding,
   useCalendarData,
-} from './useRepository';
-export { useColors } from './useColors';
+} from "./useRepository";
+export { useColors } from "./useColors";

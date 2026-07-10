@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useOnboarding, useColors } from '../src/hooks';
+import { useEffect } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { useOnboarding, useColors } from "../src/hooks";
 
 export default function Index() {
   const router = useRouter();
@@ -12,9 +12,9 @@ export default function Index() {
     if (hasCompleted === null) return;
 
     if (hasCompleted) {
-      router.replace('/main');
+      router.replace("/main");
     } else {
-      router.replace('/onboarding');
+      router.replace("/onboarding");
     }
   }, [hasCompleted, router]);
 
@@ -28,7 +28,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

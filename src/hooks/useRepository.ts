@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { repository } from '../repository';
-import type { DoseSlot, DoseLog } from '../types';
-import { getTodayDate, formatDate, calculateStreak } from '../utils/time';
+import { useState, useEffect, useCallback } from "react";
+import { repository } from "../repository";
+import type { DoseSlot, DoseLog } from "../types";
+import { getTodayDate, formatDate, calculateStreak } from "../utils/time";
 
 export function useSlots() {
   const [slots, setSlots] = useState<DoseSlot[]>([]);
@@ -19,7 +19,9 @@ export function useSlots() {
 
   const saveSlots = useCallback(async (newSlots: DoseSlot[]) => {
     await repository.saveSlots(newSlots);
-    setSlots(newSlots.filter((s) => !s.deletedAt).sort((a, b) => a.order - b.order));
+    setSlots(
+      newSlots.filter((s) => !s.deletedAt).sort((a, b) => a.order - b.order),
+    );
   }, []);
 
   return { slots, loading, saveSlots, refreshSlots: loadSlots };
@@ -48,7 +50,7 @@ export function useTodayLog(slots: DoseSlot[]) {
       await repository.setDose(today, slotId, newTaken);
       await loadLog();
     },
-    [log, today, loadLog]
+    [log, today, loadLog],
   );
 
   const updateDoseTime = useCallback(
@@ -56,14 +58,21 @@ export function useTodayLog(slots: DoseSlot[]) {
       await repository.setDose(today, slotId, true, at);
       await loadLog();
     },
-    [today, loadLog]
+    [today, loadLog],
   );
 
   const completedCount = slots.filter(
-    (slot) => log?.entries[slot.id]?.taken
+    (slot) => log?.entries[slot.id]?.taken,
   ).length;
 
-  return { log, loading, toggleDose, updateDoseTime, completedCount, refreshLog: loadLog };
+  return {
+    log,
+    loading,
+    toggleDose,
+    updateDoseTime,
+    completedCount,
+    refreshLog: loadLog,
+  };
 }
 
 export function useStreak(slots: DoseSlot[]) {
@@ -114,10 +123,14 @@ export function useOnboarding() {
   return { hasCompleted, completeOnboarding, resetOnboarding };
 }
 
-export function useCalendarData(slots: DoseSlot[], year: number, month: number) {
-  const [data, setData] = useState<Map<string, { completed: number; total: number }>>(
-    new Map()
-  );
+export function useCalendarData(
+  slots: DoseSlot[],
+  year: number,
+  month: number,
+) {
+  const [data, setData] = useState<
+    Map<string, { completed: number; total: number }>
+  >(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -127,7 +140,7 @@ export function useCalendarData(slots: DoseSlot[], year: number, month: number) 
 
       const logs = await repository.getRange(
         formatDate(startDate),
-        formatDate(endDate)
+        formatDate(endDate),
       );
 
       const logMap = new Map(logs.map((log) => [log.date, log]));

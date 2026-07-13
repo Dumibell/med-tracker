@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,12 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useColors, useSlots, useOnboarding } from "../src/hooks";
+import { useColors, useSlots, useOnboarding, useTodayLog } from "../src/hooks";
 import type { DoseSlot } from "../src/types";
 import { generateId, getIconForTime, sortSlotsByTime } from "../src/utils/time";
 import { TimePickerRow } from "../src/components/TimePickerRow";
@@ -51,6 +52,7 @@ function createDefaultSlot(index: number): DoseSlot {
 
 export default function Onboarding() {
   const router = useRouter();
+  const navigation = useNavigation();
   const colors = useColors();
   const {
     slots: existingSlots,
@@ -58,23 +60,53 @@ export default function Onboarding() {
     saveSlots,
   } = useSlots();
   const { hasCompleted, completeOnboarding } = useOnboarding();
+  const { log } = useTodayLog(existingSlots);
   const isEditingSettings = hasCompleted === true;
 
   const [count, setCount] = useState(3);
   const [slots, setLocalSlots] = useState<DoseSlot[]>(() =>
     Array.from({ length: 3 }, (_, i) => createDefaultSlot(i)),
   );
+  // Snapshot of what was loaded, so we can tell whether anything actually
+  // changed (and which slots the user removed) at save time.
+  const [baseline, setBaseline] = useState<DoseSlot[]>([]);
   const [hydratedFromExisting, setHydratedFromExisting] = useState(false);
 
   useEffect(() => {
     if (!existingSlotsLoading && !hydratedFromExisting) {
       if (existingSlots.length > 0) {
-        setLocalSlots(sortSlotsByTime(existingSlots));
+        const sorted = sortSlotsByTime(existingSlots);
+        setLocalSlots(sorted);
         setCount(existingSlots.length);
+        setBaseline(sorted);
       }
       setHydratedFromExisting(true);
     }
   }, [existingSlotsLoading, existingSlots, hydratedFromExisting]);
+
+  // Only the user-editable fields count as a change — updatedAt churns on every
+  // keystroke and would make everything look dirty.
+  const isDirty = useMemo(() => {
+    if (slots.length !== baseline.length) return true;
+    return slots.some((slot, i) => {
+      const before = baseline[i];
+      return (
+        !before ||
+        before.id !== slot.id ||
+        before.name !== slot.name ||
+        before.start !== slot.start ||
+        before.end !== slot.end
+      );
+    });
+  }, [slots, baseline]);
+
+  // Slots present when we loaded but gone now. Their dose entries are keyed by
+  // slot id, so removing one is the only edit that actually drops a record —
+  // renaming or retiming a slot keeps today's check intact.
+  const removedSlots = useMemo(() => {
+    const keptIds = new Set(slots.map((s) => s.id));
+    return baseline.filter((s) => !keptIds.has(s.id));
+  }, [slots, baseline]);
 
   const handleCountChange = useCallback((newCount: number) => {
     const clamped = Math.max(1, Math.min(10, newCount));
@@ -114,15 +146,91 @@ export default function Onboarding() {
     });
   }, []);
 
-  const handleStart = async () => {
-    await saveSlots(slots);
+  // Set when we're the ones navigating away (saving, or the user chose to
+  // discard), so the unsaved-changes guard below lets that navigation through.
+  const leavingIntentionally = useRef(false);
+
+  const commitSave = useCallback(async () => {
+    // Removed slots are soft-deleted, not dropped, so past logs keep their
+    // meaning and a future sync can replay the deletion.
+    const deletedAt = new Date().toISOString();
+    const tombstones = removedSlots.map((slot) => ({
+      ...slot,
+      deletedAt,
+      updatedAt: deletedAt,
+    }));
+
+    await saveSlots([...slots, ...tombstones]);
+
+    leavingIntentionally.current = true;
     if (isEditingSettings) {
       router.back();
     } else {
       await completeOnboarding();
       router.replace("/main");
     }
-  };
+  }, [
+    slots,
+    removedSlots,
+    saveSlots,
+    isEditingSettings,
+    completeOnboarding,
+    router,
+  ]);
+
+  // Edits here are staged until "저장하기", and the back chevron sits right next
+  // to them — so leaving with unsaved edits would silently drop them. Guarding
+  // on "beforeRemove" covers the chevron, the iOS swipe-back gesture and the
+  // Android back button in one place. Framed as discard-or-keep-editing (not
+  // "save?") so this alert can never stack on top of the delete warning.
+  useEffect(() => {
+    if (!isEditingSettings) return;
+
+    const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
+      if (leavingIntentionally.current || !isDirty) return;
+
+      e.preventDefault();
+      Alert.alert("저장하지 않고 나갈까요?", "변경한 내용이 사라져요.", [
+        { text: "계속 편집", style: "cancel" },
+        {
+          text: "나가기",
+          style: "destructive",
+          onPress: () => {
+            leavingIntentionally.current = true;
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ]);
+    });
+
+    return unsubscribe;
+  }, [navigation, isDirty, isEditingSettings]);
+
+  const saveDisabled = isEditingSettings && !isDirty;
+
+  const handleStart = useCallback(() => {
+    // Renames and time edits keep their dose entries (keyed by slot id), so
+    // they save silently. Only deleting a slot that's already checked today
+    // destroys a record — that's the one case worth interrupting for.
+    const checkedToday = removedSlots.filter(
+      (slot) => log?.entries[slot.id]?.taken,
+    );
+
+    if (checkedToday.length === 0) {
+      commitSave();
+      return;
+    }
+
+    const names = checkedToday.map((slot) => `'${slot.name}'`).join(", ");
+    Alert.alert(
+      "오늘 기록도 함께 지워져요",
+      `${names}은(는) 오늘 이미 체크했어요. 이 항목을 지우면 오늘 기록도 함께 사라져요.`,
+      [
+        { text: "취소", style: "cancel" },
+        { text: "지우고 저장", style: "destructive", onPress: commitSave },
+      ],
+    );
+  }, [removedSlots, log, commitSave]);
 
   const getIconName = (startTime: string) => {
     const icon = getIconForTime(startTime);
@@ -248,6 +356,25 @@ export default function Onboarding() {
                     }
                     onEndChange={(time) => handleSlotChange(index, "end", time)}
                   />
+                  {/* Quiet heads-up that this row carries a record today, so
+                      deleting it isn't a surprise at save time. */}
+                  {log?.entries[slot.id]?.taken && (
+                    <View style={styles.takenNote}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={14}
+                        color={colors.greenDark}
+                      />
+                      <Text
+                        style={[
+                          styles.takenNoteText,
+                          { color: colors.greenDark },
+                        ]}
+                      >
+                        오늘 체크함
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 {slots.length > 1 && (
                   <TouchableOpacity
@@ -274,11 +401,28 @@ export default function Onboarding() {
             { borderColor: colors.border, backgroundColor: colors.background },
           ]}
         >
+          {/* First run always lets you through; in settings there's nothing to
+              save until something actually changed. */}
           <TouchableOpacity
-            style={[styles.startButton, { backgroundColor: colors.greenDark }]}
+            style={[
+              styles.startButton,
+              {
+                backgroundColor: saveDisabled
+                  ? colors.unchecked
+                  : colors.greenDark,
+              },
+            ]}
             onPress={handleStart}
+            disabled={saveDisabled}
           >
-            <Text style={[styles.startButtonText, { color: colors.greenText }]}>
+            <Text
+              style={[
+                styles.startButtonText,
+                {
+                  color: saveDisabled ? colors.textSecondary : colors.greenText,
+                },
+              ]}
+            >
               {isEditingSettings ? "저장하기" : "시작하기"}
             </Text>
           </TouchableOpacity>
@@ -380,6 +524,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
     borderRadius: 8,
+  },
+  takenNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  takenNoteText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   bottomContainer: {
     position: "absolute",

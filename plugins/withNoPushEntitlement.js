@@ -1,4 +1,4 @@
-const { withEntitlementsPlist } = require('@expo/config-plugins');
+const { withEntitlementsPlist } = require("@expo/config-plugins");
 
 // expo-notifications' iOS config plugin is auto-applied by Expo's prebuild
 // step (it's in @expo/prebuild-config's hardcoded "versioned SDK plugins"
@@ -8,7 +8,7 @@ const { withEntitlementsPlist } = require('@expo/config-plugins');
 // notifications, so strip it back out.
 module.exports = function withNoPushEntitlement(config) {
   return withEntitlementsPlist(config, (config) => {
-    delete config.modResults['aps-environment'];
+    delete config.modResults["aps-environment"];
     return config;
   });
 };

@@ -39,8 +39,9 @@ description: 먹었다 앱의 UI를 만들거나 수정할 때 적용하는 시�
 상단 토글과 동일한 핵심 규칙이 점에도 그대로 적용된다. **먹음**과 **현재 위치**는 서로 다른 시각 속성으로 표현한다.
 
 - **먹음 축 = 초록 채움.** `taken`이면 `greenDark`로 꽉 채운다(+같은 초록 보더). 아니면 투명 + 옅은 중립 보더(`colors.border`).
-- **현재 축 = 크기 + 중립 링.** 현재 슬롯은 지름을 키우고(`9→12`) 보더를 중립색(`colors.uncheckedBorder`)으로. **절대 색(초록)으로 현재를 표시하지 않는다** — 초록을 현재에 쓰면 "먹음+현재"가 "먹음+비현재"와 구분되지 않는다(상단 토글에서 겪었던 문제와 동형).
-- 이렇게 채움=먹음 / 크기·링=현재로 분리하면 네 조합(먹음·현재)이 자동으로 구분된다.
+- **현재 축 = 바깥 헤일로 링.** 현재 슬롯은 점(9px 고정) 바깥에 동심원 링(`dotHalo` 20px, 중립 보더 `colors.uncheckedBorder`)을 두른다. **절대 색(초록)으로 현재를 표시하지 않는다** — 초록을 현재에 쓰면 "먹음+현재"가 "먹음+비현재"와 구분되지 않는다(상단 토글에서 겪었던 문제와 동형). **점을 회색으로 채워 선택을 표시하는 것도 금지** — 채움 채널을 두 축이 공유하게 되어 같은 문제가 재현된다.
+- 이렇게 안쪽 채움=먹음 / 바깥 링=현재로 분리하면 네 조합(먹음·현재)이 자동으로 구분된다. 크기 변화(`9→12`)만으로 현재를 표시했던 초기안은 절대 크기 차이가 3px뿐이라 사실상 안 보였다.
+- **헤일로는 항상 레이아웃에 존재**시키고 비현재일 때 보더만 `transparent`로 둔다. 그래야 선택이 옮겨가도 점 줄 폭이 흔들리지 않는다. 헤일로가 자체 여백을 만들므로 `dotRow`의 `gap`은 6으로 좁힌다.
 - 슬롯이 하나뿐이면 점 줄 자체를 숨긴다(`sortedSlots.length > 1`).
 
 ```tsx
@@ -49,17 +50,21 @@ const isCurrent = i === currentIndex;
 
 <View
   style={[
-    styles.dot, // width/height 9, borderRadius 4.5, borderWidth 1.5
-    {
-      backgroundColor: taken ? colors.greenDark : "transparent", // 먹음 축: 채움
-      borderColor: taken ? colors.greenDark : colors.border,
-    },
-    isCurrent && [
-      styles.dotCurrent, // width/height 12, borderRadius 6
-      { borderColor: colors.uncheckedBorder }, // 현재 축: 크기 + 중립 링
-    ],
+    styles.dotHalo, // width/height 20, borderRadius 10, borderWidth 1.5, center
+    // 현재 축: 바깥 중립 링 (비현재는 자리만 차지)
+    { borderColor: isCurrent ? colors.uncheckedBorder : "transparent" },
   ]}
-/>;
+>
+  <View
+    style={[
+      styles.dot, // width/height 9, borderRadius 4.5, borderWidth 1.5
+      {
+        backgroundColor: taken ? colors.greenDark : "transparent", // 먹음 축: 채움
+        borderColor: taken ? colors.greenDark : colors.border,
+      },
+    ]}
+  />
+</View>;
 ```
 
 - 점은 시간순(`sortSlotsByTime`). 탭하면 `selectByIndex(i)`로 그 슬롯을 큰 원에 올린다. `hitSlop`으로 탭 영역을 넉넉히.

@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import { useSlots, useTodayLog, useStreak, useColors } from "../src/hooks";
-import { LogoSymbol, TimeEditModal } from "../src/components";
+import { AppIconBadge, LogoSymbol, TimeEditModal } from "../src/components";
 import {
   requestNotificationPermission,
   reconcileTodayReminders,
@@ -275,6 +275,7 @@ export default function MainScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
+            <AppIconBadge size={26} />
             <Text style={[styles.headerTitle, { color: colors.text }]}>
               먹었다
             </Text>
@@ -452,7 +453,8 @@ export default function MainScreen() {
 
           {/* Dot indicator = today's progress + slot navigator, in time order.
               Green fill means "taken" (and nothing else); the current slot is
-              shown by size + a neutral ring, never by color. */}
+              shown by a neutral halo ring around the dot, never by color. The
+              halo is always laid out so the row doesn't shift as it moves. */}
           {sortedSlots.length > 1 && (
             <View style={styles.dotRow}>
               {sortedSlots.map((slot, i) => {
@@ -462,24 +464,33 @@ export default function MainScreen() {
                   <TouchableOpacity
                     key={slot.id}
                     onPress={() => selectByIndex(i)}
-                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                     accessibilityLabel={`${slot.name}${taken ? " 먹음" : ""}`}
                   >
                     <View
                       style={[
-                        styles.dot,
+                        styles.dotHalo,
                         {
-                          backgroundColor: taken
-                            ? colors.greenDark
+                          borderColor: isCurrent
+                            ? colors.uncheckedBorder
                             : "transparent",
-                          borderColor: taken ? colors.greenDark : colors.border,
                         },
-                        isCurrent && [
-                          styles.dotCurrent,
-                          { borderColor: colors.uncheckedBorder },
-                        ],
                       ]}
-                    />
+                    >
+                      <View
+                        style={[
+                          styles.dot,
+                          {
+                            backgroundColor: taken
+                              ? colors.greenDark
+                              : "transparent",
+                            borderColor: taken
+                              ? colors.greenDark
+                              : colors.border,
+                          },
+                        ]}
+                      />
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -575,19 +586,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 14,
+    gap: 6,
     marginTop: 28,
+  },
+  dotHalo: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
   },
   dot: {
     width: 9,
     height: 9,
     borderRadius: 4.5,
     borderWidth: 1.5,
-  },
-  dotCurrent: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
   },
   circleContainer: {
     flex: 1,

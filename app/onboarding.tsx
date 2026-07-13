@@ -14,22 +14,35 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors, useSlots, useOnboarding, useTodayLog } from "../src/hooks";
+import { t } from "../src/i18n";
 import type { DoseSlot } from "../src/types";
 import { generateId, getIconForTime, sortSlotsByTime } from "../src/utils/time";
 import { TimePickerRow } from "../src/components/TimePickerRow";
 
-const DEFAULT_SLOTS: Omit<DoseSlot, "id" | "updatedAt">[] = [
-  { name: "아침", start: "07:00", end: "09:00", order: 0 },
-  { name: "저녁", start: "18:00", end: "20:00", order: 1 },
-  { name: "취침 전", start: "22:00", end: "23:00", order: 2 },
-];
+// 슬롯 이름은 만들어지는 순간 사용자 데이터가 된다 — 여기서 한 번 번역해 저장하고,
+// 이후 기기 언어가 바뀌어도 다시 번역하지 않는다(사용자가 고친 이름을 덮어쓸 수 없으므로).
+const DEFAULT_SLOTS = [
+  { nameKey: "slot.default.morning", start: "07:00", end: "09:00" },
+  { nameKey: "slot.default.evening", start: "18:00", end: "20:00" },
+  { nameKey: "slot.default.bedtime", start: "22:00", end: "23:00" },
+] as const;
+
+const NAME_EXAMPLE_KEYS = [
+  "slot.default.morning",
+  "slot.default.noon",
+  "slot.default.evening",
+  "slot.default.bedtime",
+] as const;
 
 function createDefaultSlot(index: number): DoseSlot {
   const defaults = DEFAULT_SLOTS[index];
   if (defaults) {
     return {
       id: generateId(),
-      ...defaults,
+      name: t(defaults.nameKey),
+      start: defaults.start,
+      end: defaults.end,
+      order: index,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -42,7 +55,7 @@ function createDefaultSlot(index: number): DoseSlot {
 
   return {
     id: generateId(),
-    name: `복용 ${index + 1}`,
+    name: t("slot.default.nth", { n: index + 1 }),
     start: startTime,
     end: endTime,
     order: index,
@@ -190,10 +203,10 @@ export default function Onboarding() {
       if (leavingIntentionally.current || !isDirty) return;
 
       e.preventDefault();
-      Alert.alert("저장하지 않고 나갈까요?", "변경한 내용이 사라져요.", [
-        { text: "계속 편집", style: "cancel" },
+      Alert.alert(t("onboarding.discard.title"), t("onboarding.discard.body"), [
+        { text: t("onboarding.discard.keep"), style: "cancel" },
         {
-          text: "나가기",
+          text: t("onboarding.discard.leave"),
           style: "destructive",
           onPress: () => {
             leavingIntentionally.current = true;
@@ -223,11 +236,15 @@ export default function Onboarding() {
 
     const names = checkedToday.map((slot) => `'${slot.name}'`).join(", ");
     Alert.alert(
-      "오늘 기록도 함께 지워져요",
-      `${names}은(는) 오늘 이미 체크했어요. 이 항목을 지우면 오늘 기록도 함께 사라져요.`,
+      t("onboarding.deleteWarn.title"),
+      t("onboarding.deleteWarn.body", { names }),
       [
-        { text: "취소", style: "cancel" },
-        { text: "지우고 저장", style: "destructive", onPress: commitSave },
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("onboarding.deleteWarn.confirm"),
+          style: "destructive",
+          onPress: commitSave,
+        },
       ],
     );
   }, [removedSlots, log, commitSave]);
@@ -269,21 +286,21 @@ export default function Onboarding() {
             </TouchableOpacity>
           )}
           <Text style={[styles.header, { color: colors.text }]}>
-            약 알림 설정
+            {t("onboarding.header")}
           </Text>
           {!isEditingSettings && (
             <Text style={[styles.tagline, { color: colors.greenDark }]}>
-              약 먹었는지 확인하는 가장 빠른 방법
+              {t("onboarding.tagline")}
             </Text>
           )}
           <Text style={[styles.subheader, { color: colors.textSecondary }]}>
-            하루에 몇 번 약을 드시나요?{"\n"}각 복용 시간대를 설정해주세요.
+            {t("onboarding.subheader")}
           </Text>
 
           {/* Stepper */}
           <View style={styles.stepperContainer}>
             <Text style={[styles.stepperLabel, { color: colors.text }]}>
-              하루 복용 횟수
+              {t("onboarding.countLabel")}
             </Text>
             <View style={[styles.stepper, { borderColor: colors.border }]}>
               <TouchableOpacity
@@ -345,7 +362,11 @@ export default function Onboarding() {
                     onChangeText={(text) =>
                       handleSlotChange(index, "name", text)
                     }
-                    placeholder={`예: ${["아침", "점심", "저녁", "취침 전"][index] || "복용 시간"}`}
+                    placeholder={t("onboarding.namePlaceholder", {
+                      example: t(
+                        NAME_EXAMPLE_KEYS[index] ?? "slot.default.generic",
+                      ),
+                    })}
                     placeholderTextColor={colors.textSecondary}
                   />
                   <TimePickerRow
@@ -371,7 +392,7 @@ export default function Onboarding() {
                           { color: colors.greenDark },
                         ]}
                       >
-                        오늘 체크함
+                        {t("onboarding.takenToday")}
                       </Text>
                     </View>
                   )}
@@ -423,7 +444,7 @@ export default function Onboarding() {
                 },
               ]}
             >
-              {isEditingSettings ? "저장하기" : "시작하기"}
+              {isEditingSettings ? t("onboarding.save") : t("onboarding.start")}
             </Text>
           </TouchableOpacity>
         </View>

@@ -22,6 +22,7 @@ import {
   requestNotificationPermission,
   reconcileTodayReminders,
 } from "../src/notifications";
+import { t } from "../src/i18n";
 import type { DoseSlot } from "../src/types";
 import {
   pickActiveSlot,
@@ -211,15 +212,19 @@ export default function MainScreen() {
 
     // Uncheck is a correction to a real record — confirm before undoing it
     Alert.alert(
-      "취소하시겠어요?",
+      t("main.uncheck.title"),
       currentEntry?.at
-        ? `이미 ${formatTimeDisplay(
-            currentEntry.at,
-          )}에 드셨어요. 취소하시겠어요?`
-        : "이미 체크된 항목이에요. 취소하시겠어요?",
+        ? t("main.uncheck.bodyWithTime", {
+            time: formatTimeDisplay(currentEntry.at),
+          })
+        : t("main.uncheck.body"),
       [
-        { text: "아니요", style: "cancel" },
-        { text: "취소할게요", style: "destructive", onPress: performUncheck },
+        { text: t("main.uncheck.keep"), style: "cancel" },
+        {
+          text: t("main.uncheck.undo"),
+          style: "destructive",
+          onPress: performUncheck,
+        },
       ],
     );
   }, [
@@ -259,7 +264,9 @@ export default function MainScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
       >
         <View style={styles.loadingContainer}>
-          <Text style={{ color: colors.textSecondary }}>로딩 중...</Text>
+          <Text style={{ color: colors.textSecondary }}>
+            {t("common.loading")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -279,7 +286,7 @@ export default function MainScreen() {
           <View style={styles.headerTitleRow}>
             <AppIconBadge size={26} />
             <Text style={[styles.headerTitle, { color: colors.text }]}>
-              먹었다
+              {t("app.name")}
             </Text>
           </View>
           <View style={styles.headerRight}>
@@ -290,7 +297,7 @@ export default function MainScreen() {
                 <Text
                   style={[styles.streakText, { color: colors.textSecondary }]}
                 >
-                  {streak}일째 잘 챙기고 있어요
+                  {t("main.streak", { count: streak })}
                 </Text>
               </View>
             )}
@@ -349,16 +356,19 @@ export default function MainScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={
                   selectedSlot
-                    ? isSelectedCompleted
-                      ? `${selectedSlot.name} 먹음`
-                      : `${selectedSlot.name} 아직 안 먹음`
+                    ? t(
+                        isSelectedCompleted
+                          ? "main.a11y.taken"
+                          : "main.a11y.notTaken",
+                        { name: selectedSlot.name },
+                      )
                     : undefined
                 }
-                accessibilityHint={
+                accessibilityHint={t(
                   isSelectedCompleted
-                    ? "탭하면 체크를 취소해요"
-                    : "탭하면 체크돼요"
-                }
+                    ? "main.a11y.hintUncheck"
+                    : "main.a11y.hintCheck",
+                )}
               >
                 {isSelectedCompleted ? (
                   <View style={styles.circleTakenContent}>
@@ -373,9 +383,9 @@ export default function MainScreen() {
                         // 절대시각은 신뢰할 수 있는 앵커로 아래 작게. 24시간이
                         // 지나 상대시간이 비면 절대시각이 자동으로 주 정보가 된다.
                         const relative = formatRelativeTime(selectedEntry.at);
-                        const absolute = `${formatTimeDisplay(
-                          selectedEntry.at,
-                        )}에 먹음`;
+                        const absolute = t("main.takenAt", {
+                          time: formatTimeDisplay(selectedEntry.at),
+                        });
                         return relative ? (
                           <>
                             <Text
@@ -419,7 +429,7 @@ export default function MainScreen() {
                           { color: colors.textSecondary },
                         ]}
                       >
-                        탭하여 체크
+                        {t("main.tapToCheck")}
                       </Text>
                     </View>
                   )
@@ -475,7 +485,7 @@ export default function MainScreen() {
                 <Text
                   style={[styles.timeEditLink, { color: colors.textSecondary }]}
                 >
-                  시각 수정
+                  {t("main.editTime")}
                 </Text>
               </TouchableOpacity>
             )}
@@ -495,7 +505,10 @@ export default function MainScreen() {
                     key={slot.id}
                     onPress={() => selectByIndex(i)}
                     hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                    accessibilityLabel={`${slot.name}${taken ? " 먹음" : ""}`}
+                    accessibilityLabel={t(
+                      taken ? "main.a11y.taken" : "main.a11y.notTaken",
+                      { name: slot.name },
+                    )}
                   >
                     <View
                       style={[
@@ -530,7 +543,10 @@ export default function MainScreen() {
 
         {/* Summary */}
         <Text style={[styles.summary, { color: colors.textSecondary }]}>
-          오늘 {completedCount}/{slots.length} 완료
+          {t("main.summary", {
+            completed: completedCount,
+            total: slots.length,
+          })}
         </Text>
       </ScrollView>
 

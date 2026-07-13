@@ -4,26 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useColors, useCalendarData } from "../hooks";
 import type { DoseSlot } from "../types";
 import { formatDate, getCalendarColorBucket } from "../utils/time";
+import { t, formatMonthTitle, weekdayNames } from "../i18n";
 
 type Props = {
   slots: DoseSlot[];
 };
 
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const MONTHS = [
-  "1월",
-  "2월",
-  "3월",
-  "4월",
-  "5월",
-  "6월",
-  "7월",
-  "8월",
-  "9월",
-  "10월",
-  "11월",
-  "12월",
-];
+// 요일 이름은 로케일에서 파생된다(한국어 "일", 영어 "Sun"). 주 시작은 일요일 고정.
+const WEEKDAYS = weekdayNames();
 
 export function Calendar({ slots }: Props) {
   const colors = useColors();
@@ -98,7 +86,7 @@ export function Calendar({ slots }: Props) {
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.monthTitle, { color: colors.text }]}>
-          {year}년 {MONTHS[month]}
+          {formatMonthTitle(year, month)}
         </Text>
         <TouchableOpacity onPress={goToNextMonth} style={styles.navButton}>
           <Ionicons name="chevron-forward" size={20} color={colors.text} />
@@ -189,7 +177,7 @@ export function Calendar({ slots }: Props) {
             style={[styles.legendDot, { backgroundColor: colors.greenLight }]}
           />
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-            일부
+            {t("calendar.legend.some")}
           </Text>
         </View>
         <View style={styles.legendItem}>
@@ -197,7 +185,7 @@ export function Calendar({ slots }: Props) {
             style={[styles.legendDot, { backgroundColor: colors.greenMedium }]}
           />
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-            절반 이상
+            {t("calendar.legend.most")}
           </Text>
         </View>
         <View style={styles.legendItem}>
@@ -205,7 +193,7 @@ export function Calendar({ slots }: Props) {
             style={[styles.legendDot, { backgroundColor: colors.greenDark }]}
           />
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-            완료
+            {t("calendar.legend.all")}
           </Text>
         </View>
       </View>

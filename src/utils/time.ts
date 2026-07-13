@@ -1,4 +1,5 @@
 import type { DoseSlot, DoseLog } from "../types";
+import { t, formatTime } from "../i18n";
 
 /**
  * Get icon name based on start hour
@@ -97,22 +98,17 @@ export function formatDate(date: Date): string {
 }
 
 /**
- * Format time for display (e.g., "오전 8:12")
+ * Format an ISO timestamp for display (e.g., "오전 8:12" / "8:12 AM").
+ * 12- vs 24-hour is the device's choice, not ours.
  */
 export function formatTimeDisplay(isoString: string): string {
-  const date = new Date(isoString);
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const period = hours < 12 ? "오전" : "오후";
-  const displayHours = hours % 12 || 12;
-  const displayMinutes = String(minutes).padStart(2, "0");
-  return `${period} ${displayHours}:${displayMinutes}`;
+  return formatTime(new Date(isoString));
 }
 
 /**
- * Format elapsed time since an ISO timestamp as a short Korean relative
- * string (e.g. "2시간 전"). Returns "" once the gap exceeds a day, since
- * this is only meant for "먹은 지 얼마나 됐지?" on today's log.
+ * Format elapsed time since an ISO timestamp as a short relative string
+ * (e.g. "2시간 전" / "2 hours ago"). Returns "" once the gap exceeds a day,
+ * since this is only meant for "먹은 지 얼마나 됐지?" on today's log.
  */
 export function formatRelativeTime(
   isoString: string,
@@ -122,11 +118,11 @@ export function formatRelativeTime(
   const diffMs = now.getTime() - then.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (diffMinutes < 1) return "방금 전";
-  if (diffMinutes < 60) return `${diffMinutes}분 전`;
+  if (diffMinutes < 1) return t("relative.justNow");
+  if (diffMinutes < 60) return t("relative.minutesAgo", { count: diffMinutes });
 
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}시간 전`;
+  if (diffHours < 24) return t("relative.hoursAgo", { count: diffHours });
 
   return "";
 }

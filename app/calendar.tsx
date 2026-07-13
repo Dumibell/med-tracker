@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors, useSlots } from "../src/hooks";
 import { Calendar } from "../src/components/Calendar";
+import { t } from "../src/i18n";
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -28,7 +29,9 @@ export default function CalendarScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.header, { color: colors.text }]}>복용 기록</Text>
+        <Text style={[styles.header, { color: colors.text }]}>
+          {t("calendar.title")}
+        </Text>
         <Calendar slots={slots} />
       </ScrollView>
     </SafeAreaView>

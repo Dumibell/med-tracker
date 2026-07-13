@@ -1,6 +1,7 @@
 import * as Notifications from "expo-notifications";
 import type { DoseSlot, DoseLog } from "./types";
 import { timeToMinutes, getCurrentMinutes } from "./utils/time";
+import { t } from "./i18n";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -48,8 +49,8 @@ export async function reconcileTodayReminders(
 
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "먹었다",
-        body: `💊 오늘 ${slot.name} 약, 아직 안먹었어요`,
+        title: t("app.name"),
+        body: t("notification.body", { name: slot.name }),
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,

@@ -9,7 +9,10 @@
     "scheme": "med-tracker",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jennycho.medtracker"
+      "bundleIdentifier": "com.jennycho.medtracker",
+      "infoPlist": {
+        "CFBundleLocalizations": ["en", "ko"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +29,9 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      "./plugins/withNoPushEntitlement.js"
+      "./plugins/withNoPushEntitlement.js",
+      "expo-localization",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

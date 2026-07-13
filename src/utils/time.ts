@@ -106,6 +106,32 @@ export function formatTimeDisplay(isoString: string): string {
 }
 
 /**
+ * "HH:MM" → today's date at that time. The pickers speak Date, we store "HH:MM".
+ */
+export function clockToDate(time: string): Date {
+  const [hours, minutes] = time.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+/**
+ * Date → "HH:MM" (local).
+ */
+export function dateToClock(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes(),
+  ).padStart(2, "0")}`;
+}
+
+/**
+ * Format a stored "HH:MM" slot time for display, in the device's clock format.
+ */
+export function formatClockTime(time: string): string {
+  return formatTime(clockToDate(time));
+}
+
+/**
  * Format elapsed time since an ISO timestamp as a short relative string
  * (e.g. "2시간 전" / "2 hours ago"). Returns "" once the gap exceeds a day,
  * since this is only meant for "먹은 지 얼마나 됐지?" on today's log.

@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import { useSlots, useTodayLog, useStreak, useColors } from "../src/hooks";
-import { AppIconBadge, LogoSymbol, TimeEditModal } from "../src/components";
+import { AppIconBadge, LogoSymbol, TimeSheet } from "../src/components";
 import {
   requestNotificationPermission,
   reconcileTodayReminders,
@@ -30,6 +30,7 @@ import {
   formatTimeDisplay,
   formatRelativeTime,
   getTodayDate,
+  dateToClock,
 } from "../src/utils/time";
 
 const CIRCLE_SIZE = 180;
@@ -550,19 +551,15 @@ export default function MainScreen() {
         </Text>
       </ScrollView>
 
-      <TimeEditModal
+      {/* 미래 시각은 고를 수 없다 — 아직 오지 않은 시각에 약을 먹었을 수는
+          없으므로, 시트가 열리는 순간의 "지금"을 상한으로 넘긴다. */}
+      <TimeSheet
         visible={timeEditVisible}
-        initialTime={
-          selectedEntry?.at
-            ? `${String(new Date(selectedEntry.at).getHours()).padStart(
-                2,
-                "0",
-              )}:${String(new Date(selectedEntry.at).getMinutes()).padStart(
-                2,
-                "0",
-              )}`
-            : "00:00"
-        }
+        title={t("timeSheet.edit")}
+        initialTime={dateToClock(
+          selectedEntry?.at ? new Date(selectedEntry.at) : new Date(),
+        )}
+        maximumTime={dateToClock(new Date())}
         onConfirm={handleTimeEditConfirm}
         onCancel={() => setTimeEditVisible(false)}
       />

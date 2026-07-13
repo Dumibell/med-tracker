@@ -1,4 +1,5 @@
-export { TimePickerRow } from './TimePickerRow';
-export { Calendar } from './Calendar';
-export { LogoSymbol } from './LogoSymbol';
-export { TimeEditModal } from './TimeEditModal';
+export { TimePickerRow } from "./TimePickerRow";
+export { Calendar } from "./Calendar";
+export { LogoSymbol } from "./LogoSymbol";
+export { AppIconBadge } from "./AppIconBadge";
+export { TimeEditModal } from "./TimeEditModal";

@@ -386,7 +386,7 @@ export default function MainScreen() {
                 ) : (
                   <>
                     {selectedSlot && (
-                      <LogoSymbol size={60} color={colors.textSecondary} />
+                      <LogoSymbol size={80} color={colors.textSecondary} />
                     )}
                   </>
                 )}

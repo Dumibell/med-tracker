@@ -20,6 +20,9 @@ export const Colors = {
     // Unchecked state
     unchecked: "#E5E7EB",
     uncheckedBorder: "#D1D5DB",
+    // Big-circle fill while untaken. Light lifts the circle with a soft shadow
+    // (see `circleLift` in main.tsx), so the fill itself stays pure white.
+    untakenFill: "#FFFFFF",
   },
   dark: {
     background: "#0F0F0F",
@@ -42,6 +45,9 @@ export const Colors = {
     // Unchecked state
     unchecked: "#374151",
     uncheckedBorder: "#4B5563",
+    // Shadows read as nothing on a near-black background, so dark lifts the
+    // circle by going *lighter* than the background instead.
+    untakenFill: "#1A1A1A",
   },
 } as const;
 

@@ -9,6 +9,7 @@ import {
   Easing,
   Alert,
   PanResponder,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -40,6 +41,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 export default function MainScreen() {
   const router = useRouter();
   const colors = useColors();
+  const isLight = useColorScheme() !== "dark";
   const { slots, loading: slotsLoading, refreshSlots } = useSlots();
   const { log, toggleDose, updateDoseTime, completedCount, refreshLog } =
     useTodayLog(slots);
@@ -327,7 +329,16 @@ export default function MainScreen() {
               <TouchableOpacity
                 style={[
                   styles.mainCircle,
+                  // Untaken reads as a pressable surface, not an outline-only
+                  // status ring — that lift is what invites the tap. In light
+                  // the circle is white and floats on a soft shadow; in dark a
+                  // shadow would be invisible, so `untakenFill` lifts it by
+                  // being lighter than the background.
+                  !isSelectedCompleted && isLight && styles.circleLift,
                   {
+                    backgroundColor: isSelectedCompleted
+                      ? "transparent"
+                      : colors.untakenFill,
                     borderColor: isSelectedCompleted
                       ? "transparent"
                       : colors.uncheckedBorder,
@@ -335,6 +346,19 @@ export default function MainScreen() {
                 ]}
                 onPress={handleCircleTap}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  selectedSlot
+                    ? isSelectedCompleted
+                      ? `${selectedSlot.name} 먹음`
+                      : `${selectedSlot.name} 아직 안 먹음`
+                    : undefined
+                }
+                accessibilityHint={
+                  isSelectedCompleted
+                    ? "탭하면 체크를 취소해요"
+                    : "탭하면 체크돼요"
+                }
               >
                 {isSelectedCompleted ? (
                   <View style={styles.circleTakenContent}>
@@ -384,11 +408,21 @@ export default function MainScreen() {
                       })()}
                   </View>
                 ) : (
-                  <>
-                    {selectedSlot && (
-                      <LogoSymbol size={80} color={colors.textSecondary} />
-                    )}
-                  </>
+                  selectedSlot && (
+                    // Mirrors the taken layout (icon + text stacked inside the
+                    // circle) so the circle stays self-contained in both states.
+                    <View style={styles.circleUntakenContent}>
+                      <LogoSymbol size={64} color={colors.textSecondary} />
+                      <Text
+                        style={[
+                          styles.circleHint,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        탭하여 체크
+                      </Text>
+                    </View>
+                  )
                 )}
               </TouchableOpacity>
             </Animated.View>
@@ -434,12 +468,8 @@ export default function MainScreen() {
           </View>
 
           {/* Fixed-height so the circle above never shifts when the taken
-              state adds the "시각 수정" link (and a longer label). */}
+              state adds the "시각 수정" link. */}
           <View style={styles.circleFooter}>
-            <Text style={[styles.circleLabel, { color: colors.textSecondary }]}>
-              {isSelectedCompleted ? "다시 탭하면 취소" : "탭하여 체크"}
-            </Text>
-
             {isSelectedCompleted && (
               <TouchableOpacity onPress={() => setTimeEditVisible(true)}>
                 <Text
@@ -622,6 +652,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  circleLift: {
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
   ringOverlay: {
     position: "absolute",
     top: 0,
@@ -638,6 +675,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
   },
+  circleUntakenContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  circleHint: {
+    marginTop: 8,
+    fontSize: 14,
+    textAlign: "center",
+  },
   circleTakenPrimary: {
     marginTop: 6,
     fontSize: 18,
@@ -650,17 +697,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   circleFooter: {
-    height: 64,
+    height: 44,
     alignItems: "center",
     overflow: "hidden",
   },
-  circleLabel: {
-    marginTop: 16,
-    fontSize: 14,
-    textAlign: "center",
-  },
   timeEditLink: {
-    marginTop: 8,
+    marginTop: 16,
     fontSize: 13,
     textDecorationLine: "underline",
   },

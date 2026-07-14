@@ -6,3 +6,4 @@ export {
   useCalendarData,
 } from "./useRepository";
 export { useColors } from "./useColors";
+export { useAppResume } from "./useAppResume";

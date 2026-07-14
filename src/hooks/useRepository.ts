@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { repository } from "../repository";
+import { useAppResume } from "./useAppResume";
 import type { DoseSlot, DoseLog } from "../types";
 import { getTodayDate, formatDate, calculateStreak } from "../utils/time";
 
@@ -30,7 +31,9 @@ export function useSlots() {
 export function useTodayLog(slots: DoseSlot[]) {
   const [log, setLog] = useState<DoseLog | null>(null);
   const [loading, setLoading] = useState(true);
-  const today = getTodayDate();
+  // "오늘"은 렌더 시점에 굳으면 안 된다. 앱이 자정을 넘겨 백그라운드에 있었다면
+  // 어제 날짜가 그대로 남아, 돌아와서 체크한 약이 어제 로그에 기록된다.
+  const [today, setToday] = useState(getTodayDate);
 
   const loadLog = useCallback(async () => {
     const data = await repository.getLog(today);
@@ -41,6 +44,15 @@ export function useTodayLog(slots: DoseSlot[]) {
   useEffect(() => {
     loadLog();
   }, [loadLog]);
+
+  useAppResume(
+    useCallback(() => {
+      // 날짜가 넘어갔으면 setToday가 loadLog를 새로 만들어 위 effect가 다시
+      // 읽는다. 같은 날이면 state가 바뀌지 않으니 여기서 직접 다시 읽는다.
+      setToday(getTodayDate());
+      loadLog();
+    }, [loadLog]),
+  );
 
   const toggleDose = useCallback(
     async (slotId: string) => {

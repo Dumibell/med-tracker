@@ -16,7 +16,13 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as Haptics from "expo-haptics";
-import { useSlots, useTodayLog, useStreak, useColors } from "../src/hooks";
+import {
+  useSlots,
+  useTodayLog,
+  useStreak,
+  useColors,
+  useAppResume,
+} from "../src/hooks";
 import { AppIconBadge, LogoSymbol, TimeSheet } from "../src/components";
 import {
   requestNotificationPermission,
@@ -54,6 +60,9 @@ export default function MainScreen() {
   const [sweepAnim] = useState(new Animated.Value(0));
   const [flashAnim] = useState(new Animated.Value(0));
   const [timeEditVisible, setTimeEditVisible] = useState(false);
+  // "먹은 지 얼마나 됐지"의 기준 시각. 백그라운드에 있는 동안은 렌더가 없으니
+  // 재개할 때 다시 찍어줘야 "10분 전"이 몇 시간째 굳어 있지 않는다.
+  const [now, setNow] = useState(() => new Date());
 
   const sortedSlots = useMemo(() => sortSlotsByTime(slots), [slots]);
   const currentIndex = selectedSlot
@@ -86,13 +95,35 @@ export default function MainScreen() {
     }),
   ).current;
 
+  // 마지막으로 "시간이 골라준" 슬롯. 사용자가 스와이프로 옮겨간 슬롯과
+  // 구분하기 위해 따로 기억한다 (아래 재개 처리에서 쓴다).
+  const autoPicked = useRef<string | null>(null);
+
   // Auto-select active slot on load
   useEffect(() => {
     if (slots.length > 0 && !selectedSlot) {
       const active = pickActiveSlot(slots);
+      autoPicked.current = active?.id ?? null;
       setSelectedSlot(active);
     }
   }, [slots, selectedSlot]);
+
+  // 어떤 슬롯을 보여줄지는 "지금"이 정하는데, 백그라운드에 있는 동안 시간은
+  // 흘러도 화면은 그대로 멈춰 있다. 돌아왔을 때 다시 고른다: 시간이 다른
+  // 슬롯으로 넘어갔으면 따라가고(즉답성), 그대로면 사용자가 직접 스와이프해
+  // 둔 슬롯을 함부로 빼앗지 않는다.
+  useAppResume(
+    useCallback(() => {
+      setNow(new Date());
+      refreshSlots();
+
+      const active = pickActiveSlot(slots);
+      if (active && active.id !== autoPicked.current) {
+        autoPicked.current = active.id;
+        setSelectedSlot(active);
+      }
+    }, [slots, refreshSlots]),
+  );
 
   // Keep the selected slot pointing at the *latest* object whenever slots
   // refresh (e.g. returning from settings with a renamed slot). Without this
@@ -383,7 +414,10 @@ export default function MainScreen() {
                         // "언제 먹었나"에 바로 답하는 상대시간을 주인공으로,
                         // 절대시각은 신뢰할 수 있는 앵커로 아래 작게. 24시간이
                         // 지나 상대시간이 비면 절대시각이 자동으로 주 정보가 된다.
-                        const relative = formatRelativeTime(selectedEntry.at);
+                        const relative = formatRelativeTime(
+                          selectedEntry.at,
+                          now,
+                        );
                         const absolute = t("main.takenAt", {
                           time: formatTimeDisplay(selectedEntry.at),
                         });

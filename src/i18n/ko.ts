@@ -72,7 +72,7 @@ export const ko = {
   "calendar.legend.most": "절반 이상",
   "calendar.legend.all": "완료",
 
-  "notification.body": "💊 오늘 {name} 약, 아직 안먹었어요",
+  "notification.body": "💊 오늘 {name} 챙기셨어요?",
 } as const;
 
 export type TranslationKey = keyof typeof ko;

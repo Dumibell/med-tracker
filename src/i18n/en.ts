@@ -80,5 +80,5 @@ export const en: EnDict = {
   "calendar.legend.most": "Most",
   "calendar.legend.all": "All",
 
-  "notification.body": "💊 You haven't checked your {name} dose yet",
+  "notification.body": "💊 Did you take your {name} dose today?",
 };

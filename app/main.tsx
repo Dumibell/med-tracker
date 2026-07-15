@@ -26,7 +26,7 @@ import {
 import { AppIconBadge, LogoSymbol, TimeSheet } from "../src/components";
 import {
   requestNotificationPermission,
-  reconcileTodayReminders,
+  reconcileReminders,
 } from "../src/notifications";
 import { t } from "../src/i18n";
 import type { DoseSlot } from "../src/types";
@@ -157,7 +157,7 @@ export default function MainScreen() {
   useEffect(() => {
     if (slotsLoading) return;
     requestNotificationPermission().then((granted) => {
-      if (granted) reconcileTodayReminders(slots, log);
+      if (granted) reconcileReminders(slots, log);
     });
   }, [slots, log, slotsLoading]);
 

@@ -1,4 +1,5 @@
 import type { DoseSlot, DoseLog, MedRepository } from "../types";
+import { sortSlotsByTime } from "../utils/time";
 
 const KEYS = {
   SLOTS: "med_slots",
@@ -17,24 +18,32 @@ function getStorage() {
   return mmkvInstance;
 }
 
+/**
+ * 순서는 이제 `order`가 아니라 시간이 정한다(`sortSlotsByTime`). `order` 시절에
+ * 저장된 슬롯에는 `createdAt`이 없으므로 읽을 때 `updatedAt`으로 채워준다 —
+ * tiebreaker가 undefined를 만나면 같은 시각 슬롯의 순서가 흔들린다. `order`는
+ * 여기서 조용히 떨어져 나간다.
+ */
+function normalizeSlot(raw: any): DoseSlot {
+  return {
+    id: raw.id,
+    name: raw.name,
+    start: raw.start,
+    end: raw.end,
+    createdAt: raw.createdAt ?? raw.updatedAt,
+    updatedAt: raw.updatedAt,
+    ...(raw.deletedAt ? { deletedAt: raw.deletedAt } : {}),
+  };
+}
+
 export class LocalRepository implements MedRepository {
   private get storage() {
     return getStorage();
   }
 
   async getSlots(): Promise<DoseSlot[]> {
-    const data = this.storage.getString(KEYS.SLOTS);
-    if (!data) return [];
-
-    try {
-      const slots: DoseSlot[] = JSON.parse(data);
-      // Filter out soft-deleted slots for normal use
-      return slots
-        .filter((slot) => !slot.deletedAt)
-        .sort((a, b) => a.order - b.order);
-    } catch {
-      return [];
-    }
+    const all = await this.getAllSlotsIncludingDeleted();
+    return sortSlotsByTime(all.filter((slot) => !slot.deletedAt));
   }
 
   async getAllSlotsIncludingDeleted(): Promise<DoseSlot[]> {
@@ -42,7 +51,8 @@ export class LocalRepository implements MedRepository {
     if (!data) return [];
 
     try {
-      return JSON.parse(data);
+      const raw: any[] = JSON.parse(data);
+      return raw.map(normalizeSlot);
     } catch {
       return [];
     }

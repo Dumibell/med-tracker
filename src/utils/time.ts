@@ -36,12 +36,32 @@ export function getCurrentMinutes(): number {
 }
 
 /**
- * Sort slots chronologically by start time. Stable: slots with the same
- * start time keep their relative (insertion) order.
+ * 시간이 순서를 정한다 — 수동 `order`는 두지 않는다. 같은 시각이 겹칠 수 있으므로
+ * `end`, 그다음 `createdAt`까지 내려가는 tiebreaker로 순서를 못 박는다. 이게 없으면
+ * 같은 시각 슬롯의 순서가 렌더마다 흔들린다.
  */
 export function sortSlotsByTime(slots: DoseSlot[]): DoseSlot[] {
   return [...slots].sort(
-    (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start),
+    (a, b) =>
+      timeToMinutes(a.start) - timeToMinutes(b.start) ||
+      timeToMinutes(a.end) - timeToMinutes(b.end) ||
+      a.createdAt.localeCompare(b.createdAt),
+  );
+}
+
+/**
+ * 그 날짜에 실제로 존재했던 슬롯들(시간순). 캘린더의 분모와 스트릭 판정이 이걸 쓴다.
+ * "지금의 슬롯 목록"으로 과거를 판정하면, 슬롯을 하나 추가하는 순간 지난달 전체가
+ * 그 슬롯을 안 먹은 "덜 챙긴 날"로 물든다 — 슬롯이 생기기 전 날짜에는 소급하지 않는다.
+ *
+ * createdAt은 UTC ISO라 그대로 자르면 시차가 있는 지역에서 하루 어긋난다. 로컬
+ * 날짜로 환산해 비교한다. 삭제된 슬롯은 과거에서도 빠지는데, 이는 기존 동작 그대로다.
+ */
+export function slotsForDate(slots: DoseSlot[], date: string): DoseSlot[] {
+  return sortSlotsByTime(
+    slots.filter(
+      (s) => !s.deletedAt && formatDate(new Date(s.createdAt)) <= date,
+    ),
   );
 }
 
@@ -95,6 +115,15 @@ export function formatDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * `Date`에 며칠을 더한 새 `Date`(로컬 자정 기준). 알림을 며칠치 미리 걸 때 쓴다.
+ */
+export function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 /**
@@ -156,6 +185,9 @@ export function formatRelativeTime(
 /**
  * Calculate streak: consecutive days where ALL doses were taken
  * Count from today (if complete) or yesterday backwards
+ *
+ * 분모는 날짜마다 다시 구한다(`slotsForDate`) — 오늘 추가한 슬롯이 과거의 완료
+ * 판정을 뒤집으면 안 된다.
  */
 export function calculateStreak(
   logs: DoseLog[],
@@ -165,16 +197,18 @@ export function calculateStreak(
   if (slots.length === 0) return 0;
 
   const logMap = new Map(logs.map((log) => [log.date, log]));
-  const activeSlotIds = new Set(
-    slots.filter((s) => !s.deletedAt).map((s) => s.id),
-  );
 
   const isComplete = (date: string): boolean => {
     const log = logMap.get(date);
     if (!log) return false;
 
-    for (const slotId of activeSlotIds) {
-      if (!log.entries[slotId]?.taken) {
+    const due = slotsForDate(slots, date);
+    // 그날 챙길 슬롯이 없었으면 세지 않는다 — 여기서 true를 주면 앱을 쓰기 전의
+    // 과거로 끝없이 거슬러 올라간다.
+    if (due.length === 0) return false;
+
+    for (const slot of due) {
+      if (!log.entries[slot.id]?.taken) {
         return false;
       }
     }

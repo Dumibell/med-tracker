@@ -3,7 +3,7 @@ export type DoseSlot = {
   name: string;
   start: string; // "HH:MM"
   end: string; // "HH:MM"
-  order: number;
+  createdAt: string; // ISO — 정렬 tiebreaker 겸 "언제부터 있던 슬롯인지"의 기준
   updatedAt: string; // ISO
   deletedAt?: string; // soft delete
 };

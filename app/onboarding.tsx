@@ -35,6 +35,9 @@ const NAME_EXAMPLE_KEYS = [
 ] as const;
 
 function createDefaultSlot(index: number): DoseSlot {
+  // 같은 배치에서 만든 슬롯이라도 createdAt이 겹치지 않게 index만큼 밀어준다 —
+  // 사용자가 나중에 이들을 같은 시각으로 바꿔도 tiebreaker가 추가 순서를 지킨다.
+  const now = new Date(Date.now() + index).toISOString();
   const defaults = DEFAULT_SLOTS[index];
   if (defaults) {
     return {
@@ -42,8 +45,8 @@ function createDefaultSlot(index: number): DoseSlot {
       name: t(defaults.nameKey),
       start: defaults.start,
       end: defaults.end,
-      order: index,
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
   }
 
@@ -58,8 +61,8 @@ function createDefaultSlot(index: number): DoseSlot {
     name: t("slot.default.nth", { n: index + 1 }),
     start: startTime,
     end: endTime,
-    order: index,
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
 }
 

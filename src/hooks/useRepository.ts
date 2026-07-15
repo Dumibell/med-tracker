@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { repository } from "../repository";
 import { useAppResume } from "./useAppResume";
 import type { DoseSlot, DoseLog } from "../types";
-import { getTodayDate, formatDate, calculateStreak } from "../utils/time";
+import {
+  getTodayDate,
+  formatDate,
+  calculateStreak,
+  slotsForDate,
+  sortSlotsByTime,
+} from "../utils/time";
 
 export function useSlots() {
   const [slots, setSlots] = useState<DoseSlot[]>([]);
@@ -20,9 +26,7 @@ export function useSlots() {
 
   const saveSlots = useCallback(async (newSlots: DoseSlot[]) => {
     await repository.saveSlots(newSlots);
-    setSlots(
-      newSlots.filter((s) => !s.deletedAt).sort((a, b) => a.order - b.order),
-    );
+    setSlots(sortSlotsByTime(newSlots.filter((s) => !s.deletedAt)));
   }, []);
 
   return { slots, loading, saveSlots, refreshSlots: loadSlots };
@@ -163,16 +167,21 @@ export function useCalendarData(
         const dateStr = formatDate(current);
         const log = logMap.get(dateStr);
 
+        // 분모는 "지금의 슬롯 목록"이 아니라 그날 실제로 존재했던 슬롯이다.
+        // 그러지 않으면 슬롯을 하나 추가하는 순간 지난달 전체가 "덜 챙긴 날"로
+        // 물든다.
+        const due = slotsForDate(slots, dateStr);
+
         let completed = 0;
         if (log) {
-          for (const slot of slots) {
+          for (const slot of due) {
             if (log.entries[slot.id]?.taken) {
               completed++;
             }
           }
         }
 
-        result.set(dateStr, { completed, total: slots.length });
+        result.set(dateStr, { completed, total: due.length });
         current.setDate(current.getDate() + 1);
       }
 

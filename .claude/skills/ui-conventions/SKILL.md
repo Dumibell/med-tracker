@@ -84,7 +84,7 @@ onPanResponderRelease: (_, g) => {
 },
 ```
 
-`panResponder.panHandlers`는 큰 원 래퍼 `View`에 스프레드한다.
+`panResponder.panHandlers`는 원 하나가 아니라 **원 주변 영역 전체(`circleContainer` — 슬롯 제목·원·점을 감싸는 뷰)**에 스프레드한다. 원 안에서만 잡으면 스와이프 표적이 너무 작다. 가로 드래그만 가로채므로 그 안의 원 탭·점 탭·세로 스크롤은 그대로 통과한다.
 
 ## 탭 인터랙션 (체크/해제 비대칭)
 

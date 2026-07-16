@@ -274,20 +274,22 @@ export default function Onboarding() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        {/* 뒤로가기는 스크롤과 함께 사라지면 안 된다 — 시간대가 늘어 화면이
+            길어져도 항상 상단에 보이게 ScrollView 밖에 고정한다. */}
+        {isEditingSettings && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {isEditingSettings && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          )}
           <Text style={[styles.header, { color: colors.text }]}>
             {t("onboarding.header")}
           </Text>
@@ -465,10 +467,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    // 하단 저장 버튼(약 106pt, position: absolute)에 마지막 시간대가 가리지
+    // 않도록 그 높이만큼 여백을 비운다.
+    paddingBottom: 132,
   },
   backButton: {
-    marginBottom: 12,
+    // ScrollView 밖으로 나오면서 scrollContent의 좌우 패딩을 잃으므로 직접 준다.
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 4,
     alignSelf: "flex-start",
   },
   header: {

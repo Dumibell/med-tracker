@@ -44,6 +44,11 @@ const RING_STROKE_WIDTH = 4;
 const RING_RADIUS = (CIRCLE_SIZE - RING_STROKE_WIDTH) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+// 스와이프 피드백. 드래그 중엔 원이 손가락 이동의 이 비율만큼만 따라오고(고무줄),
+// 슬롯이 넘어가면 새 원이 이만큼 떨어진 자리에서 미끄러져 들어온다.
+const SWIPE_FOLLOW = 0.35;
+const SWIPE_ENTER = 48;
+
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function MainScreen() {
@@ -59,6 +64,7 @@ export default function MainScreen() {
   const [scaleAnim] = useState(new Animated.Value(1));
   const [sweepAnim] = useState(new Animated.Value(0));
   const [flashAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(0));
   const [timeEditVisible, setTimeEditVisible] = useState(false);
   // "먹은 지 얼마나 됐지"의 기준 시각. 백그라운드에 있는 동안은 렌더가 없으니
   // 재개할 때 다시 찍어줘야 "10분 전"이 몇 시간째 굳어 있지 않는다.
@@ -79,18 +85,40 @@ export default function MainScreen() {
 
   // PanResponder reads the latest index/handler through a ref so the gesture
   // created once still moves relative to the current slot.
-  const swipeState = useRef({ currentIndex, selectByIndex });
-  swipeState.current = { currentIndex, selectByIndex };
+  const swipeState = useRef({ currentIndex, selectByIndex, count: 0 });
+  swipeState.current = {
+    currentIndex,
+    selectByIndex,
+    count: sortedSlots.length,
+  };
   const panResponder = useRef(
     PanResponder.create({
       // Only claim the gesture on a clear horizontal drag — taps still reach
       // the circle's TouchableOpacity for check/uncheck.
       onMoveShouldSetPanResponder: (_, g) =>
         Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy),
+      // 드래그하는 동안 원이 손가락을 감쇠해 따라온다 — 끌려오되 저항이 있는 느낌.
+      onPanResponderMove: (_, g) => {
+        slideAnim.setValue(g.dx * SWIPE_FOLLOW);
+      },
       onPanResponderRelease: (_, g) => {
-        const { currentIndex, selectByIndex } = swipeState.current;
-        if (g.dx < -40) selectByIndex(currentIndex + 1);
-        else if (g.dx > 40) selectByIndex(currentIndex - 1);
+        const { currentIndex, selectByIndex, count } = swipeState.current;
+        let enter = 0;
+        if (g.dx < -40 && currentIndex < count - 1) {
+          selectByIndex(currentIndex + 1);
+          enter = SWIPE_ENTER; // 다음 슬롯이 오른쪽에서 미끄러져 들어온다
+        } else if (g.dx > 40 && currentIndex > 0) {
+          selectByIndex(currentIndex - 1);
+          enter = -SWIPE_ENTER; // 이전 슬롯은 왼쪽에서
+        }
+        // 넘어갔으면 새 슬롯을 진입 지점에서, 아니면 끌려온 자리에서 제자리로 튕겨 정착.
+        if (enter !== 0) slideAnim.setValue(enter);
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 7,
+          tension: 80,
+          useNativeDriver: true,
+        }).start();
       },
     }),
   ).current;
@@ -308,10 +336,14 @@ export default function MainScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
+      {/* 콘텐츠가 화면에 다 들어가면 세로로 튀지 않게 한다 — 기본 바운스가
+          원을 좌우로 스와이프할 때 위아래로 딸려 움직여 제스처를 방해했다.
+          콘텐츠가 실제로 넘칠 때(작은 화면·큰 글자)만 스크롤이 살아난다. */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        alwaysBounceVertical={false}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -350,181 +382,196 @@ export default function MainScreen() {
 
         {/* Main circle — the hero. Which slot is shown is named just above it,
             and the dot row below doubles as today's progress + navigator. */}
-        <View style={styles.circleContainer}>
-          {/* Fixed-height, single line so the circle below never shifts when
-              the slot name length changes between slots. */}
-          <View style={styles.slotTitleBox}>
-            {selectedSlot && (
-              <Text
-                style={[styles.slotTitle, { color: colors.text }]}
-                numberOfLines={1}
-              >
-                {selectedSlot.name}
-              </Text>
-            )}
-          </View>
-          <View style={styles.circleWrapper} {...panResponder.panHandlers}>
-            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-              <TouchableOpacity
-                style={[
-                  styles.mainCircle,
-                  // Untaken reads as a pressable surface, not an outline-only
-                  // status ring — that lift is what invites the tap. In light
-                  // the circle is white and floats on a soft shadow; in dark a
-                  // shadow would be invisible, so `untakenFill` lifts it by
-                  // being lighter than the background.
-                  !isSelectedCompleted && isLight && styles.circleLift,
-                  {
-                    backgroundColor: isSelectedCompleted
-                      ? "transparent"
-                      : colors.untakenFill,
-                    borderColor: isSelectedCompleted
-                      ? "transparent"
-                      : colors.uncheckedBorder,
-                  },
-                ]}
-                onPress={handleCircleTap}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  selectedSlot
-                    ? t(
-                        isSelectedCompleted
-                          ? "main.a11y.taken"
-                          : "main.a11y.notTaken",
-                        { name: selectedSlot.name },
-                      )
-                    : undefined
-                }
-                accessibilityHint={t(
-                  isSelectedCompleted
-                    ? "main.a11y.hintUncheck"
-                    : "main.a11y.hintCheck",
-                )}
-              >
-                {isSelectedCompleted ? (
-                  <View style={styles.circleTakenContent}>
-                    <Ionicons
-                      name="checkmark"
-                      size={52}
-                      color={colors.greenDark}
-                    />
-                    {selectedEntry?.at &&
-                      (() => {
-                        // "언제 먹었나"에 바로 답하는 상대시간을 주인공으로,
-                        // 절대시각은 신뢰할 수 있는 앵커로 아래 작게. 24시간이
-                        // 지나 상대시간이 비면 절대시각이 자동으로 주 정보가 된다.
-                        const relative = formatRelativeTime(
-                          selectedEntry.at,
-                          now,
-                        );
-                        const absolute = t("main.takenAt", {
-                          time: formatTimeDisplay(selectedEntry.at),
-                        });
-                        return relative ? (
-                          <>
+        {/* 스와이프는 원 주변 영역 전체에서 먹는다 — 원 안에서만 잡으면 표적이
+            너무 작다. PanResponder는 명확한 가로 드래그만 가로채므로, 이 안의
+            원 탭·점 탭·세로 스크롤은 그대로 통과한다. */}
+        <View style={styles.circleContainer} {...panResponder.panHandlers}>
+          {/* 이름·원·시각수정은 한 슬롯에 속한 한 덩어리라 스와이프 때 함께 민다.
+              점과 요약은 전체 슬롯을 대표하는 네비게이터이므로 고정. */}
+          <Animated.View
+            style={[
+              styles.slideGroup,
+              { transform: [{ translateX: slideAnim }] },
+            ]}
+          >
+            {/* Fixed-height, single line so the circle below never shifts when
+                the slot name length changes between slots. */}
+            <View style={styles.slotTitleBox}>
+              {selectedSlot && (
+                <Text
+                  style={[styles.slotTitle, { color: colors.text }]}
+                  numberOfLines={1}
+                >
+                  {selectedSlot.name}
+                </Text>
+              )}
+            </View>
+            <View style={styles.circleWrapper}>
+              <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                <TouchableOpacity
+                  style={[
+                    styles.mainCircle,
+                    // Untaken reads as a pressable surface, not an outline-only
+                    // status ring — that lift is what invites the tap. In light
+                    // the circle is white and floats on a soft shadow; in dark a
+                    // shadow would be invisible, so `untakenFill` lifts it by
+                    // being lighter than the background.
+                    !isSelectedCompleted && isLight && styles.circleLift,
+                    {
+                      backgroundColor: isSelectedCompleted
+                        ? "transparent"
+                        : colors.untakenFill,
+                      borderColor: isSelectedCompleted
+                        ? "transparent"
+                        : colors.uncheckedBorder,
+                    },
+                  ]}
+                  onPress={handleCircleTap}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    selectedSlot
+                      ? t(
+                          isSelectedCompleted
+                            ? "main.a11y.taken"
+                            : "main.a11y.notTaken",
+                          { name: selectedSlot.name },
+                        )
+                      : undefined
+                  }
+                  accessibilityHint={t(
+                    isSelectedCompleted
+                      ? "main.a11y.hintUncheck"
+                      : "main.a11y.hintCheck",
+                  )}
+                >
+                  {isSelectedCompleted ? (
+                    <View style={styles.circleTakenContent}>
+                      <Ionicons
+                        name="checkmark"
+                        size={52}
+                        color={colors.greenDark}
+                      />
+                      {selectedEntry?.at &&
+                        (() => {
+                          // "언제 먹었나"에 바로 답하는 상대시간을 주인공으로,
+                          // 절대시각은 신뢰할 수 있는 앵커로 아래 작게. 24시간이
+                          // 지나 상대시간이 비면 절대시각이 자동으로 주 정보가 된다.
+                          const relative = formatRelativeTime(
+                            selectedEntry.at,
+                            now,
+                          );
+                          const absolute = t("main.takenAt", {
+                            time: formatTimeDisplay(selectedEntry.at),
+                          });
+                          return relative ? (
+                            <>
+                              <Text
+                                style={[
+                                  styles.circleTakenPrimary,
+                                  { color: colors.greenDark },
+                                ]}
+                              >
+                                {relative}
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.circleTakenSecondary,
+                                  { color: colors.textSecondary },
+                                ]}
+                              >
+                                {absolute}
+                              </Text>
+                            </>
+                          ) : (
                             <Text
                               style={[
                                 styles.circleTakenPrimary,
                                 { color: colors.greenDark },
                               ]}
                             >
-                              {relative}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.circleTakenSecondary,
-                                { color: colors.textSecondary },
-                              ]}
-                            >
                               {absolute}
                             </Text>
-                          </>
-                        ) : (
-                          <Text
-                            style={[
-                              styles.circleTakenPrimary,
-                              { color: colors.greenDark },
-                            ]}
-                          >
-                            {absolute}
-                          </Text>
-                        );
-                      })()}
-                  </View>
-                ) : (
-                  selectedSlot && (
-                    // Mirrors the taken layout (icon + text stacked inside the
-                    // circle) so the circle stays self-contained in both states.
-                    <View style={styles.circleUntakenContent}>
-                      <LogoSymbol size={64} color={colors.textSecondary} />
-                      <Text
-                        style={[
-                          styles.circleHint,
-                          { color: colors.textSecondary },
-                        ]}
-                      >
-                        {t("main.tapToCheck")}
-                      </Text>
+                          );
+                        })()}
                     </View>
-                  )
-                )}
-              </TouchableOpacity>
-            </Animated.View>
+                  ) : (
+                    selectedSlot && (
+                      // Mirrors the taken layout (icon + text stacked inside the
+                      // circle) so the circle stays self-contained in both states.
+                      <View style={styles.circleUntakenContent}>
+                        <LogoSymbol size={64} color={colors.textSecondary} />
+                        <Text
+                          style={[
+                            styles.circleHint,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("main.tapToCheck")}
+                        </Text>
+                      </View>
+                    )
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
 
-            {/* Green ring sweeps in on check, disappears on uncheck */}
-            <Svg
-              width={CIRCLE_SIZE}
-              height={CIRCLE_SIZE}
-              style={styles.ringOverlay}
-              pointerEvents="none"
-            >
-              <AnimatedCircle
-                cx={CIRCLE_SIZE / 2}
-                cy={CIRCLE_SIZE / 2}
-                r={RING_RADIUS}
-                stroke={colors.greenDark}
-                strokeWidth={RING_STROKE_WIDTH}
-                fill="none"
-                strokeLinecap="round"
-                transform={`rotate(-90 ${CIRCLE_SIZE / 2} ${CIRCLE_SIZE / 2})`}
-                strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
-                strokeDashoffset={sweepAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [RING_CIRCUMFERENCE, 0],
-                })}
-              />
-            </Svg>
-
-            {/* Quick flash right as the ring finishes sweeping */}
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                styles.flashOverlay,
-                {
-                  backgroundColor: colors.greenDark,
-                  opacity: flashAnim.interpolate({
+              {/* Green ring sweeps in on check, disappears on uncheck */}
+              <Svg
+                width={CIRCLE_SIZE}
+                height={CIRCLE_SIZE}
+                style={styles.ringOverlay}
+                pointerEvents="none"
+              >
+                <AnimatedCircle
+                  cx={CIRCLE_SIZE / 2}
+                  cy={CIRCLE_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke={colors.greenDark}
+                  strokeWidth={RING_STROKE_WIDTH}
+                  fill="none"
+                  strokeLinecap="round"
+                  transform={`rotate(-90 ${CIRCLE_SIZE / 2} ${CIRCLE_SIZE / 2})`}
+                  strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
+                  strokeDashoffset={sweepAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, 0.35],
-                  }),
-                },
-              ]}
-            />
-          </View>
+                    outputRange: [RING_CIRCUMFERENCE, 0],
+                  })}
+                />
+              </Svg>
 
-          {/* Fixed-height so the circle above never shifts when the taken
+              {/* Quick flash right as the ring finishes sweeping */}
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.flashOverlay,
+                  {
+                    backgroundColor: colors.greenDark,
+                    opacity: flashAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 0.35],
+                    }),
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Fixed-height so the circle above never shifts when the taken
               state adds the "시각 수정" link. */}
-          <View style={styles.circleFooter}>
-            {isSelectedCompleted && (
-              <TouchableOpacity onPress={() => setTimeEditVisible(true)}>
-                <Text
-                  style={[styles.timeEditLink, { color: colors.textSecondary }]}
-                >
-                  {t("main.editTime")}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+            <View style={styles.circleFooter}>
+              {isSelectedCompleted && (
+                <TouchableOpacity onPress={() => setTimeEditVisible(true)}>
+                  <Text
+                    style={[
+                      styles.timeEditLink,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {t("main.editTime")}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </Animated.View>
 
           {/* Dot indicator = today's progress + slot navigator, in time order.
               Green fill means "taken" (and nothing else); the current slot is
@@ -683,6 +730,9 @@ const styles = StyleSheet.create({
   circleContainer: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+  },
+  slideGroup: {
     alignItems: "center",
   },
   circleWrapper: {

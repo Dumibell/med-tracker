@@ -16,6 +16,7 @@ type EnDict = Record<TranslationKey, string> & {
 export const en: EnDict = {
   "common.cancel": "Cancel",
   "common.confirm": "Done",
+  "common.close": "Close",
   "common.loading": "Loading…",
 
   "app.name": "먹었다",
@@ -79,6 +80,15 @@ export const en: EnDict = {
   "calendar.legend.some": "Some",
   "calendar.legend.most": "Most",
   "calendar.legend.all": "All",
+  "calendar.tapHint": "Tap a day to review or fix its record",
+
+  "dateEdit.summary": "{completed} of {total} taken",
+  "dateEdit.empty": "Nothing to take on this day",
+  "dateEdit.markedTaken": "Marked as taken",
+  "dateEdit.hint":
+    "You don't need the exact time.\nJust mark what you took and the record catches up.",
+  "dateEdit.a11y.taken": "{name} taken, tap to undo",
+  "dateEdit.a11y.notTaken": "{name} not taken, tap to mark taken",
 
   "notification.body": "💊 Did you take your {name} dose today?",
 };

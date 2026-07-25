@@ -99,9 +99,11 @@ export class LocalRepository implements MedRepository {
       };
     }
 
+    // at은 받은 그대로 저장한다. "지금 먹음"의 현재 시각을 채우는 건 호출부의
+    // 몫이다 — 과거 날짜를 정정할 땐 먹은 시각을 알 수 없어 at 없이 taken만 남긴다.
     log.entries[slotId] = {
       taken,
-      at: taken ? at || new Date().toISOString() : undefined,
+      at: taken ? at : undefined,
     };
     log.updatedAt = new Date().toISOString();
 

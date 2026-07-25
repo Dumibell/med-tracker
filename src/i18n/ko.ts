@@ -8,6 +8,7 @@
 export const ko = {
   "common.cancel": "취소",
   "common.confirm": "확인",
+  "common.close": "닫기",
   "common.loading": "로딩 중...",
 
   // 브랜드명은 번역하지 않는다.
@@ -71,6 +72,16 @@ export const ko = {
   "calendar.legend.some": "일부",
   "calendar.legend.most": "절반 이상",
   "calendar.legend.all": "완료",
+  "calendar.tapHint": "날짜를 눌러 그날 기록을 확인·정정",
+
+  // 지난 날짜를 눌러 그날 복용을 바로잡는 시트.
+  "dateEdit.summary": "{total}개 중 {completed}개 챙겼어요",
+  "dateEdit.empty": "이 날은 챙길 약이 없었어요",
+  "dateEdit.markedTaken": "챙김으로 표시함",
+  "dateEdit.hint":
+    "먹은 시간까지는 몰라도 돼요.\n챙겼는지만 눌러 두면 기록이 맞춰져요.",
+  "dateEdit.a11y.taken": "{name} 챙김, 탭하면 해제",
+  "dateEdit.a11y.notTaken": "{name} 아직 안 챙김, 탭하면 챙김",
 
   "notification.body": "💊 오늘 {name} 챙기셨어요?",
 } as const;

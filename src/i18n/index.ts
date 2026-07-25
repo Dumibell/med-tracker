@@ -53,6 +53,15 @@ export function formatTime(date: Date): string {
   });
 }
 
+/** 정정 시트 헤더: "7월 14일 (월)" / "Mon, Jul 14". 연도는 붙이지 않는다. */
+export function formatSheetDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(locale, {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+}
+
 /** 캘린더 헤더: "2026년 7월" / "July 2026". */
 export function formatMonthTitle(year: number, month: number): string {
   return new Date(year, month, 1).toLocaleDateString(locale, {

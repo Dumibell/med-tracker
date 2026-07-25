@@ -5,6 +5,7 @@ import { useColors, useCalendarData } from "../hooks";
 import type { DoseSlot } from "../types";
 import { formatDate, getCalendarColorBucket } from "../utils/time";
 import { t, formatMonthTitle, weekdayNames } from "../i18n";
+import { DateEditSheet } from "./DateEditSheet";
 
 type Props = {
   slots: DoseSlot[];
@@ -18,8 +19,10 @@ export function Calendar({ slots }: Props) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  // 정정 시트가 열린 날짜. null이면 닫힘.
+  const [editDate, setEditDate] = useState<string | null>(null);
 
-  const { data } = useCalendarData(slots, year, month);
+  const { data, refresh } = useCalendarData(slots, year, month);
 
   const todayStr = formatDate(today);
 
@@ -133,9 +136,18 @@ export function Calendar({ slots }: Props) {
             const isToday = dateStr === todayStr;
             const isSunday = cellIndex === 0;
             const isSaturday = cellIndex === 6;
+            // 아직 오지 않은 날은 정정할 기록이 없어 흐리게, 눌리지 않는다.
+            const isFuture = dateStr > todayStr;
 
             return (
-              <View key={cellIndex} style={styles.cell}>
+              <TouchableOpacity
+                key={cellIndex}
+                style={styles.cell}
+                onPress={() => setEditDate(dateStr)}
+                disabled={isFuture}
+                activeOpacity={0.6}
+                accessibilityRole="button"
+              >
                 <View
                   style={[
                     styles.dayCircle,
@@ -143,6 +155,7 @@ export function Calendar({ slots }: Props) {
                       backgroundColor: bgColor,
                       borderWidth: isToday ? 2 : 0,
                       borderColor: isToday ? colors.greenDark : "transparent",
+                      opacity: isFuture ? 0.35 : 1,
                     },
                   ]}
                 >
@@ -164,7 +177,7 @@ export function Calendar({ slots }: Props) {
                     {day}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -197,6 +210,18 @@ export function Calendar({ slots }: Props) {
           </Text>
         </View>
       </View>
+
+      <Text style={[styles.tapHint, { color: colors.textSecondary }]}>
+        {t("calendar.tapHint")}
+      </Text>
+
+      <DateEditSheet
+        visible={editDate !== null}
+        date={editDate}
+        slots={slots}
+        onClose={() => setEditDate(null)}
+        onChanged={refresh}
+      />
     </View>
   );
 }
@@ -275,5 +300,10 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
+  },
+  tapHint: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 14,
   },
 });

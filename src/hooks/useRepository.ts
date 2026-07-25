@@ -63,7 +63,13 @@ export function useTodayLog(slots: DoseSlot[]) {
       const currentEntry = log?.entries[slotId];
       const newTaken = !currentEntry?.taken;
 
-      await repository.setDose(today, slotId, newTaken);
+      // 오늘 지금 체크하는 것이므로 현재 시각을 명시해 "언제 먹음"을 남긴다.
+      await repository.setDose(
+        today,
+        slotId,
+        newTaken,
+        newTaken ? new Date().toISOString() : undefined,
+      );
       await loadLog();
     },
     [log, today, loadLog],
@@ -149,50 +155,51 @@ export function useCalendarData(
   >(new Map());
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
+  const loadData = useCallback(async () => {
+    if (slots.length === 0) return;
 
-      const logs = await repository.getRange(
-        formatDate(startDate),
-        formatDate(endDate),
-      );
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0);
 
-      const logMap = new Map(logs.map((log) => [log.date, log]));
-      const result = new Map<string, { completed: number; total: number }>();
+    const logs = await repository.getRange(
+      formatDate(startDate),
+      formatDate(endDate),
+    );
 
-      const current = new Date(startDate);
-      while (current <= endDate) {
-        const dateStr = formatDate(current);
-        const log = logMap.get(dateStr);
+    const logMap = new Map(logs.map((log) => [log.date, log]));
+    const result = new Map<string, { completed: number; total: number }>();
 
-        // 분모는 "지금의 슬롯 목록"이 아니라 그날 실제로 존재했던 슬롯이다.
-        // 그러지 않으면 슬롯을 하나 추가하는 순간 지난달 전체가 "덜 챙긴 날"로
-        // 물든다.
-        const due = slotsForDate(slots, dateStr);
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dateStr = formatDate(current);
+      const log = logMap.get(dateStr);
 
-        let completed = 0;
-        if (log) {
-          for (const slot of due) {
-            if (log.entries[slot.id]?.taken) {
-              completed++;
-            }
+      // 분모는 "지금의 슬롯 목록"이 아니라 그날 실제로 존재했던 슬롯이다.
+      // 그러지 않으면 슬롯을 하나 추가하는 순간 지난달 전체가 "덜 챙긴 날"로
+      // 물든다.
+      const due = slotsForDate(slots, dateStr);
+
+      let completed = 0;
+      if (log) {
+        for (const slot of due) {
+          if (log.entries[slot.id]?.taken) {
+            completed++;
           }
         }
-
-        result.set(dateStr, { completed, total: due.length });
-        current.setDate(current.getDate() + 1);
       }
 
-      setData(result);
-      setLoading(false);
-    };
-
-    if (slots.length > 0) {
-      loadData();
+      result.set(dateStr, { completed, total: due.length });
+      current.setDate(current.getDate() + 1);
     }
+
+    setData(result);
+    setLoading(false);
   }, [slots, year, month]);
 
-  return { data, loading };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // 과거 정정으로 그날 기록이 바뀌면 캘린더가 색·분모를 다시 계산하도록 노출한다.
+  return { data, loading, refresh: loadData };
 }

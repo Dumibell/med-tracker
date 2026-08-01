@@ -12,7 +12,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as Haptics from "expo-haptics";
@@ -53,6 +53,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function MainScreen() {
   const router = useRouter();
+  const { slot: slotParam } = useLocalSearchParams<{ slot?: string }>();
   const colors = useColors();
   const isLight = useColorScheme() !== "dark";
   const { slots, loading: slotsLoading, refreshSlots } = useSlots();
@@ -135,6 +136,20 @@ export default function MainScreen() {
       setSelectedSlot(active);
     }
   }, [slots, selectedSlot]);
+
+  // 알림을 눌러 들어왔으면(params.slot) 그 시간대를 선택한다 — 현재 시각이 고른
+  // 슬롯보다 우선. 한 번만 반영하고, 이후 사용자가 스와이프로 옮긴 걸 되돌리지
+  // 않도록 처리한 값을 ref로 기억한다.
+  const handledSlotParam = useRef<string | null>(null);
+  useEffect(() => {
+    if (!slotParam || handledSlotParam.current === slotParam) return;
+    const target = sortedSlots.find((s) => s.id === slotParam);
+    if (target) {
+      setSelectedSlot(target);
+      autoPicked.current = target.id;
+      handledSlotParam.current = slotParam;
+    }
+  }, [slotParam, sortedSlots]);
 
   // 어떤 슬롯을 보여줄지는 "지금"이 정하는데, 백그라운드에 있는 동안 시간은
   // 흘러도 화면은 그대로 멈춰 있다. 돌아왔을 때 다시 고른다: 시간이 다른

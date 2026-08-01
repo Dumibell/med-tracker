@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors, useCalendarData } from "../hooks";
@@ -9,18 +9,30 @@ import { DateEditSheet } from "./DateEditSheet";
 
 type Props = {
   slots: DoseSlot[];
+  /** 지난 알림을 눌러 들어왔을 때 바로 열 날짜 "YYYY-MM-DD". */
+  openDate?: string | null;
 };
 
 // 요일 이름은 로케일에서 파생된다(한국어 "일", 영어 "Sun"). 주 시작은 일요일 고정.
 const WEEKDAYS = weekdayNames();
 
-export function Calendar({ slots }: Props) {
+export function Calendar({ slots, openDate }: Props) {
   const colors = useColors();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   // 정정 시트가 열린 날짜. null이면 닫힘.
   const [editDate, setEditDate] = useState<string | null>(null);
+
+  // 알림에서 넘어온 날짜가 있으면 그 시트를 연다. 그 달로도 이동시켜 캘린더가
+  // 해당 날짜를 보여주게 한다.
+  useEffect(() => {
+    if (!openDate) return;
+    setEditDate(openDate);
+    const d = new Date(`${openDate}T00:00:00`);
+    setYear(d.getFullYear());
+    setMonth(d.getMonth());
+  }, [openDate]);
 
   const { data, refresh } = useCalendarData(slots, year, month);
 

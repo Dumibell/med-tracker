@@ -1,6 +1,12 @@
 import * as Notifications from "expo-notifications";
 import type { DoseSlot, DoseLog } from "./types";
-import { timeToMinutes, addDays, formatDate, slotsForDate } from "./utils/time";
+import {
+  timeToMinutes,
+  addDays,
+  formatDate,
+  slotsForDate,
+  getTodayDate,
+} from "./utils/time";
 import { t } from "./i18n";
 
 // iOS는 앱당 예약 알림을 64개까지만 유지한다 — 넘으면 오래된 것부터 조용히
@@ -74,6 +80,8 @@ export async function reconcileReminders(
         content: {
           title: t("app.name"),
           body: t("notification.body", { name: slot.name }),
+          // 클릭하면 어느 날짜·시간대였는지 알아야 그 슬롯으로 보낼 수 있다.
+          data: { slotId: slot.id, date: dateStr },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -83,4 +91,25 @@ export async function reconcileReminders(
       scheduled++;
     }
   }
+}
+
+export type NotificationTarget =
+  | { kind: "today"; slotId: string }
+  | { kind: "past"; date: string; slotId: string };
+
+/**
+ * 알림 응답에서 "어디로 보낼지"를 뽑는다. 슬롯은 매일 반복되므로 날짜는 구분이
+ * 아니라 라우팅에 쓴다 — 오늘 알림이면 메인의 그 슬롯, 지난 알림이면 그날을 정정
+ * 하는 캘린더로. payload가 없거나(과거 버전 알림 등) 형식이 안 맞으면 null.
+ */
+export function notificationTarget(
+  response: Notifications.NotificationResponse | null,
+): NotificationTarget | null {
+  const data = response?.notification?.request?.content?.data as
+    { slotId?: string; date?: string } | undefined;
+  if (!data?.slotId || !data?.date) return null;
+
+  return data.date === getTodayDate()
+    ? { kind: "today", slotId: data.slotId }
+    : { kind: "past", date: data.date, slotId: data.slotId };
 }

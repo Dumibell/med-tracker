@@ -128,14 +128,17 @@ export default function MainScreen() {
   // 구분하기 위해 따로 기억한다 (아래 재개 처리에서 쓴다).
   const autoPicked = useRef<string | null>(null);
 
-  // Auto-select active slot on load
+  // Auto-select active slot on load. 알림으로 특정 슬롯을 보러 왔으면(slotParam)
+  // 그 처리에 양보한다 — 여기서 현재 시각 슬롯을 먼저 깔면 알림 슬롯이 잠깐
+  // 깜빡였다 바뀐다.
   useEffect(() => {
+    if (slotParam) return;
     if (slots.length > 0 && !selectedSlot) {
       const active = pickActiveSlot(slots);
       autoPicked.current = active?.id ?? null;
       setSelectedSlot(active);
     }
-  }, [slots, selectedSlot]);
+  }, [slots, selectedSlot, slotParam]);
 
   // 알림을 눌러 들어왔으면(params.slot) 그 시간대를 선택한다 — 현재 시각이 고른
   // 슬롯보다 우선. 한 번만 반영하고, 이후 사용자가 스와이프로 옮긴 걸 되돌리지
@@ -155,17 +158,23 @@ export default function MainScreen() {
   // 흘러도 화면은 그대로 멈춰 있다. 돌아왔을 때 다시 고른다: 시간이 다른
   // 슬롯으로 넘어갔으면 따라가고(즉답성), 그대로면 사용자가 직접 스와이프해
   // 둔 슬롯을 함부로 빼앗지 않는다.
+  //
+  // 단, 알림을 눌러 특정 슬롯을 보러 온 상태(slotParam)면 시간 따라가기를 하지
+  // 않는다 — 이게 없으면 점심 알림으로 들어와도 복귀 처리가 현재 시각(저녁)으로
+  // 끌고 가, 정작 그 알림의 슬롯을 못 보게 된다.
   useAppResume(
     useCallback(() => {
       setNow(new Date());
       refreshSlots();
+
+      if (slotParam) return;
 
       const active = pickActiveSlot(slots);
       if (active && active.id !== autoPicked.current) {
         autoPicked.current = active.id;
         setSelectedSlot(active);
       }
-    }, [slots, refreshSlots]),
+    }, [slots, refreshSlots, slotParam]),
   );
 
   // Keep the selected slot pointing at the *latest* object whenever slots

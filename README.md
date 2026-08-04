@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./assets/icon.png" width="88" alt="먹었다 앱 아이콘" />
+
 # 먹었다
 
 **약 먹었는지 _확인_시켜주는 앱.**
@@ -61,11 +63,23 @@
 
 ## 스크린샷
 
-> 스크린샷을 `docs/` 아래에 넣고 아래 표를 채워 주세요.
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/main-empty.png" alt="메인 · 미복용" /><br /><sub>메인 · 미복용</sub></td>
+    <td align="center" width="25%"><img src="docs/main-taken.png" alt="메인 · 복용 완료" /><br /><sub>메인 · 복용 완료</sub></td>
+    <td align="center" width="25%"><img src="docs/calendar.png" alt="캘린더" /><br /><sub>캘린더</sub></td>
+    <td align="center" width="25%"><img src="docs/correction.png" alt="지난 날짜 정정" /><br /><sub>지난 날짜 정정</sub></td>
+  </tr>
+</table>
 
-| 메인 (미복용) | 메인 (복용 완료) |  캘린더   | 지난 날짜 정정 |
-| :-----------: | :--------------: | :-------: | :------------: |
-|   _준비 중_   |    _준비 중_     | _준비 중_ |   _준비 중_    |
+<details>
+<summary>시간대 설정 화면</summary>
+
+<br />
+
+<img src="docs/settings.png" width="260" alt="시간대 설정" />
+
+</details>
 
 ## 로컬 실행
 

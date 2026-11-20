@@ -9,7 +9,7 @@
     "scheme": "med-tracker",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.jennycho.medtracker",
+      "bundleIdentifier": "com.dumibell.medtracker",
       "buildNumber": "1",
       "infoPlist": {
         "CFBundleLocalizations": ["en", "ko"]
@@ -21,7 +21,7 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.jennycho.medtracker",
+      "package": "com.dumibell.medtracker",
       "versionCode": 1
     },
     "web": {

@@ -36,6 +36,13 @@
       "expo-localization",
       "@react-native-community/datetimepicker",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bff21def-31b8-49e6-82c6-acc3eea0fb15"
+      }
+    },
+    "owner": "dumibell"
   }
 }

@@ -8,11 +8,13 @@
     "userInterfaceStyle": "automatic",
     "scheme": "med-tracker",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.jennycho.medtracker",
-      "buildNumber": "1",
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dumibell.medtracker",
       "infoPlist": {
-        "CFBundleLocalizations": ["en", "ko"]
+        "CFBundleLocalizations": [
+          "en",
+          "ko"
+        ]
       }
     },
     "android": {
@@ -21,8 +23,7 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.jennycho.medtracker",
-      "versionCode": 1
+      "package": "com.dumibell.medtracker"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -33,7 +34,15 @@
       "expo-status-bar",
       "./plugins/withNoPushEntitlement.js",
       "expo-localization",
-      "@react-native-community/datetimepicker"
-    ]
+      "@react-native-community/datetimepicker",
+      "expo-font"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bff21def-31b8-49e6-82c6-acc3eea0fb15"
+      }
+    },
+    "owner": "dumibell"
   }
 }

@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "scheme": "med-tracker",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.jennycho.medtracker",
       "buildNumber": "1",
       "infoPlist": {

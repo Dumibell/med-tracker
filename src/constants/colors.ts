@@ -1,10 +1,10 @@
 export const Colors = {
   light: {
     background: "#FFFFFF",
-    surface: "#F8F9FA",
+    surface: "#F7F7F5",
     text: "#1A1A1A",
-    textSecondary: "#6B7280",
-    border: "#E5E7EB",
+    textSecondary: "#6B6E68",
+    border: "#E6E7E3",
 
     // Green accent ramp (completion/calendar)
     greenLight: "#C0DD97",
@@ -12,14 +12,13 @@ export const Colors = {
     greenDark: "#639922",
     greenText: "#FFFFFF", // text on dark green
 
-    // Streak pill (amber/warning)
-    amber: "#F59E0B",
-    amberLight: "#FEF3C7",
-    amberText: "#92400E",
+    // Weekend day labels: the Korean calendar habit, toned down
+    sunday: "#C4524A",
+    saturday: "#4A6FA5",
 
     // Unchecked state
-    unchecked: "#E5E7EB",
-    uncheckedBorder: "#D1D5DB",
+    unchecked: "#E6E7E3",
+    uncheckedBorder: "#D3D5CF",
     // Big-circle fill while untaken. Light lifts the circle with a soft shadow
     // (see `circleLift` in main.tsx), so the fill itself stays pure white.
     untakenFill: "#FFFFFF",
@@ -27,9 +26,9 @@ export const Colors = {
   dark: {
     background: "#0F0F0F",
     surface: "#1A1A1A",
-    text: "#F9FAFB",
-    textSecondary: "#9CA3AF",
-    border: "#374151",
+    text: "#F7F7F5",
+    textSecondary: "#9A9C97",
+    border: "#2E302C",
 
     // Green accent ramp
     greenLight: "#3D5A1E",
@@ -37,14 +36,13 @@ export const Colors = {
     greenDark: "#639922",
     greenText: "#D4EDBC",
 
-    // Streak pill
-    amber: "#F59E0B",
-    amberLight: "#451A03",
-    amberText: "#FDE68A",
+    // Weekend day labels
+    sunday: "#D9766F",
+    saturday: "#7B9BCB",
 
     // Unchecked state
-    unchecked: "#374151",
-    uncheckedBorder: "#4B5563",
+    unchecked: "#2E302C",
+    uncheckedBorder: "#4A4D47",
     // Shadows read as nothing on a near-black background, so dark lifts the
     // circle by going *lighter* than the background instead.
     untakenFill: "#1A1A1A",

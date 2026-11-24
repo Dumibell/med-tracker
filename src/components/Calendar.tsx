@@ -94,7 +94,7 @@ export function Calendar({ slots, openDate }: Props) {
   }
 
   return (
-    <View style={[styles.container, { borderColor: colors.border }]}>
+    <View>
       {/* Month navigation */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goToPrevMonth} style={styles.navButton}>
@@ -118,9 +118,9 @@ export function Calendar({ slots, openDate }: Props) {
                 {
                   color:
                     i === 0
-                      ? "#EF4444"
+                      ? colors.sunday
                       : i === 6
-                        ? "#3B82F6"
+                        ? colors.saturday
                         : colors.textSecondary,
                 },
               ]}
@@ -179,9 +179,9 @@ export function Calendar({ slots, openDate }: Props) {
                           bucket === "full"
                             ? colors.greenText
                             : isSunday
-                              ? "#EF4444"
+                              ? colors.sunday
                               : isSaturday
-                                ? "#3B82F6"
+                                ? colors.saturday
                                 : colors.text,
                       },
                     ]}
@@ -223,10 +223,6 @@ export function Calendar({ slots, openDate }: Props) {
         </View>
       </View>
 
-      <Text style={[styles.tapHint, { color: colors.textSecondary }]}>
-        {t("calendar.tapHint")}
-      </Text>
-
       <DateEditSheet
         visible={editDate !== null}
         date={editDate}
@@ -239,11 +235,6 @@ export function Calendar({ slots, openDate }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -295,10 +286,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 16,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
+    marginTop: 20,
   },
   legendItem: {
     flexDirection: "row",
@@ -312,10 +300,5 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-  },
-  tapHint: {
-    fontSize: 12,
-    textAlign: "center",
-    marginTop: 14,
   },
 });

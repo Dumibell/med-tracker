@@ -23,7 +23,7 @@ export const en: EnDict = {
 
   "main.streak_one": "{count} day in a row",
   "main.streak": "{count} days in a row",
-  "main.tapToCheck": "Tap to check",
+  "main.tapToCheck": "Not taken yet",
   "main.takenAt": "Taken at {time}",
   "main.editTime": "Edit time",
   "main.summary": "{completed} of {total} today",
@@ -50,7 +50,6 @@ export const en: EnDict = {
   "timeSheet.edit": "Edit time",
 
   "onboarding.header": "Dose schedule",
-  "onboarding.tagline": "The fastest way to know if you already took it",
   "onboarding.subheader":
     "How many times a day do you take it?\nSet each dose window.",
   "onboarding.countLabel": "Doses per day",
@@ -80,7 +79,6 @@ export const en: EnDict = {
   "calendar.legend.some": "Some",
   "calendar.legend.most": "Most",
   "calendar.legend.all": "All",
-  "calendar.tapHint": "Tap a day to review or fix its record",
 
   "dateEdit.summary": "{completed} of {total} taken",
   "dateEdit.empty": "Nothing to take on this day",
@@ -90,5 +88,5 @@ export const en: EnDict = {
   "dateEdit.a11y.taken": "{name} taken, tap to undo",
   "dateEdit.a11y.notTaken": "{name} not taken, tap to mark taken",
 
-  "notification.body": "💊 Did you take your {name} dose today?",
+  "notification.body": "Did you take your {name} dose today?",
 };

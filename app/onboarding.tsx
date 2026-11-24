@@ -293,11 +293,6 @@ export default function Onboarding() {
           <Text style={[styles.header, { color: colors.text }]}>
             {t("onboarding.header")}
           </Text>
-          {!isEditingSettings && (
-            <Text style={[styles.tagline, { color: colors.greenDark }]}>
-              {t("onboarding.tagline")}
-            </Text>
-          )}
           <Text style={[styles.subheader, { color: colors.textSecondary }]}>
             {t("onboarding.subheader")}
           </Text>
@@ -344,7 +339,7 @@ export default function Onboarding() {
           </View>
 
           {/* Slot rows */}
-          <View style={styles.slotsContainer}>
+          <View>
             {slots.map((slot, index) => (
               <View
                 key={slot.id}
@@ -354,7 +349,7 @@ export default function Onboarding() {
                   <Ionicons
                     name={getIconName(slot.start)}
                     size={24}
-                    color={colors.greenDark}
+                    color={colors.textSecondary}
                   />
                 </View>
                 <View style={styles.slotContent}>
@@ -433,9 +428,7 @@ export default function Onboarding() {
             style={[
               styles.startButton,
               {
-                backgroundColor: saveDisabled
-                  ? colors.unchecked
-                  : colors.greenDark,
+                backgroundColor: saveDisabled ? colors.unchecked : colors.text,
               },
             ]}
             onPress={handleStart}
@@ -445,7 +438,9 @@ export default function Onboarding() {
               style={[
                 styles.startButtonText,
                 {
-                  color: saveDisabled ? colors.textSecondary : colors.greenText,
+                  color: saveDisabled
+                    ? colors.textSecondary
+                    : colors.background,
                 },
               ]}
             >
@@ -483,11 +478,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 8,
   },
-  tagline: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
   subheader: {
     fontSize: 16,
     lineHeight: 24,
@@ -523,15 +513,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-  slotsContainer: {
-    gap: 16,
-  },
   slotRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    padding: 16,
-    borderWidth: 1,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderTopWidth: 1,
   },
   slotIconContainer: {
     width: 40,

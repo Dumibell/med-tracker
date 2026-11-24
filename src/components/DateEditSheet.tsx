@@ -167,7 +167,7 @@ export function DateEditSheet({
                     <Ionicons
                       name={iconName(slot.start)}
                       size={20}
-                      color={colors.textSecondary}
+                      color={colors.greenDark}
                     />
                     <View style={styles.doseBody}>
                       <Text style={[styles.doseName, { color: colors.text }]}>

@@ -44,7 +44,6 @@ export const ko = {
     "하루에 몇 번 약을 드시나요?\n각 복용 시간대를 설정해주세요.",
   "onboarding.countLabel": "하루 복용 횟수",
   "onboarding.namePlaceholder": "예: {example}",
-  "onboarding.takenToday": "오늘 체크함",
   "onboarding.save": "저장하기",
   "onboarding.start": "시작하기",
 

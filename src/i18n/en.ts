@@ -54,7 +54,6 @@ export const en: EnDict = {
     "How many times a day do you take it?\nSet each dose window.",
   "onboarding.countLabel": "Doses per day",
   "onboarding.namePlaceholder": "e.g. {example}",
-  "onboarding.takenToday": "Checked today",
   "onboarding.save": "Save",
   "onboarding.start": "Get started",
 

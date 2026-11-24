@@ -349,7 +349,7 @@ export default function Onboarding() {
                   <Ionicons
                     name={getIconName(slot.start)}
                     size={24}
-                    color={colors.textSecondary}
+                    color={colors.greenDark}
                   />
                 </View>
                 <View style={styles.slotContent}>
@@ -377,25 +377,6 @@ export default function Onboarding() {
                     }
                     onEndChange={(time) => handleSlotChange(index, "end", time)}
                   />
-                  {/* Quiet heads-up that this row carries a record today, so
-                      deleting it isn't a surprise at save time. */}
-                  {log?.entries[slot.id]?.taken && (
-                    <View style={styles.takenNote}>
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={14}
-                        color={colors.greenDark}
-                      />
-                      <Text
-                        style={[
-                          styles.takenNoteText,
-                          { color: colors.greenDark },
-                        ]}
-                      >
-                        {t("onboarding.takenToday")}
-                      </Text>
-                    </View>
-                  )}
                 </View>
                 {slots.length > 1 && (
                   <TouchableOpacity
@@ -541,15 +522,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
     borderRadius: 8,
-  },
-  takenNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  takenNoteText: {
-    fontSize: 12,
-    fontWeight: "600",
   },
   bottomContainer: {
     position: "absolute",

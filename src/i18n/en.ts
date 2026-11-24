@@ -16,7 +16,6 @@ type EnDict = Record<TranslationKey, string> & {
 export const en: EnDict = {
   "common.cancel": "Cancel",
   "common.confirm": "Done",
-  "common.close": "Close",
   "common.loading": "Loading…",
 
   "app.name": "먹었다",
@@ -50,12 +49,10 @@ export const en: EnDict = {
   "timeSheet.edit": "Edit time",
 
   "onboarding.header": "Dose schedule",
-  "onboarding.tagline": "The fastest way to know if you already took it",
   "onboarding.subheader":
     "How many times a day do you take it?\nSet each dose window.",
   "onboarding.countLabel": "Doses per day",
   "onboarding.namePlaceholder": "e.g. {example}",
-  "onboarding.takenToday": "Checked today",
   "onboarding.save": "Save",
   "onboarding.start": "Get started",
 
@@ -80,7 +77,6 @@ export const en: EnDict = {
   "calendar.legend.some": "Some",
   "calendar.legend.most": "Most",
   "calendar.legend.all": "All",
-  "calendar.tapHint": "Tap a day to review or fix its record",
 
   "dateEdit.summary": "{completed} of {total} taken",
   "dateEdit.empty": "Nothing to take on this day",
@@ -90,5 +86,5 @@ export const en: EnDict = {
   "dateEdit.a11y.taken": "{name} taken, tap to undo",
   "dateEdit.a11y.notTaken": "{name} not taken, tap to mark taken",
 
-  "notification.body": "💊 Did you take your {name} dose today?",
+  "notification.body": "Did you take your {name} dose today?",
 };

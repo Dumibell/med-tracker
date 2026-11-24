@@ -8,7 +8,6 @@
 export const ko = {
   "common.cancel": "취소",
   "common.confirm": "확인",
-  "common.close": "닫기",
   "common.loading": "로딩 중...",
 
   // 브랜드명은 번역하지 않는다.
@@ -39,13 +38,11 @@ export const ko = {
   "timeSheet.end": "종료 시각",
   "timeSheet.edit": "시각 수정",
 
-  "onboarding.header": "약 알림 설정",
-  "onboarding.tagline": "약 먹었는지 확인하는 가장 빠른 방법",
+  "onboarding.header": "복용 시간대",
   "onboarding.subheader":
     "하루에 몇 번 약을 드시나요?\n각 복용 시간대를 설정해주세요.",
   "onboarding.countLabel": "하루 복용 횟수",
   "onboarding.namePlaceholder": "예: {example}",
-  "onboarding.takenToday": "오늘 체크함",
   "onboarding.save": "저장하기",
   "onboarding.start": "시작하기",
 
@@ -72,7 +69,6 @@ export const ko = {
   "calendar.legend.some": "일부",
   "calendar.legend.most": "절반 이상",
   "calendar.legend.all": "완료",
-  "calendar.tapHint": "날짜를 눌러 그날 기록을 확인·정정",
 
   // 지난 날짜를 눌러 그날 복용을 바로잡는 시트.
   "dateEdit.summary": "{total}개 중 {completed}개 챙겼어요",
@@ -83,7 +79,7 @@ export const ko = {
   "dateEdit.a11y.taken": "{name} 챙김, 탭하면 해제",
   "dateEdit.a11y.notTaken": "{name} 아직 안 챙김, 탭하면 챙김",
 
-  "notification.body": "💊 오늘 {name} 챙기셨어요?",
+  "notification.body": "오늘 {name} 챙기셨어요?",
 } as const;
 
 export type TranslationKey = keyof typeof ko;

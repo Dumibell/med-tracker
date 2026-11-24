@@ -379,9 +379,7 @@ export default function MainScreen() {
           </View>
           <View style={styles.headerRight}>
             {streak > 0 && (
-              <View
-                style={[styles.streakPill, { backgroundColor: colors.surface }]}
-              >
+              <View style={styles.streak}>
                 <Text
                   style={[styles.streakText, { color: colors.textSecondary }]}
                 >
@@ -708,14 +706,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  streakPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+  streak: {
+    paddingHorizontal: 4,
   },
   streakText: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
   },
   settingsButton: {
     padding: 4,
@@ -774,7 +769,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   circleLift: {
-    shadowColor: "#0F172A",
+    shadowColor: "#000000",
     shadowOpacity: 0.1,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },

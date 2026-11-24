@@ -5,11 +5,11 @@ import { useColors, useCalendarData } from "../hooks";
 import type { DoseSlot } from "../types";
 import { formatDate, getCalendarColorBucket } from "../utils/time";
 import { t, formatMonthTitle, weekdayNames } from "../i18n";
-import { DateEditSheet } from "./DateEditSheet";
+import { DayRecord } from "./DayRecord";
 
 type Props = {
   slots: DoseSlot[];
-  /** 지난 알림을 눌러 들어왔을 때 바로 열 날짜 "YYYY-MM-DD". */
+  /** 지난 알림을 눌러 들어왔을 때 고를 날짜 "YYYY-MM-DD". 없으면 오늘. */
   openDate?: string | null;
 };
 
@@ -21,14 +21,15 @@ export function Calendar({ slots, openDate }: Props) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-  // 정정 시트가 열린 날짜. null이면 닫힘.
-  const [editDate, setEditDate] = useState<string | null>(null);
+  // 아래에 기록을 보여줄 날짜. 열면 오늘이 골라져 있어, 날짜를 누르면 답이
+  // 바뀐다는 걸 설명 없이 보여준다.
+  const [selectedDate, setSelectedDate] = useState(formatDate(today));
 
-  // 알림에서 넘어온 날짜가 있으면 그 시트를 연다. 그 달로도 이동시켜 캘린더가
+  // 알림에서 넘어온 날짜가 있으면 그날을 고른다. 그 달로도 이동시켜 캘린더가
   // 해당 날짜를 보여주게 한다.
   useEffect(() => {
     if (!openDate) return;
-    setEditDate(openDate);
+    setSelectedDate(openDate);
     const d = new Date(`${openDate}T00:00:00`);
     setYear(d.getFullYear());
     setMonth(d.getMonth());
@@ -94,7 +95,7 @@ export function Calendar({ slots, openDate }: Props) {
   }
 
   return (
-    <View style={[styles.container, { borderColor: colors.border }]}>
+    <View>
       {/* Month navigation */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goToPrevMonth} style={styles.navButton}>
@@ -118,9 +119,9 @@ export function Calendar({ slots, openDate }: Props) {
                 {
                   color:
                     i === 0
-                      ? "#EF4444"
+                      ? colors.sunday
                       : i === 6
-                        ? "#3B82F6"
+                        ? colors.saturday
                         : colors.textSecondary,
                 },
               ]}
@@ -146,6 +147,7 @@ export function Calendar({ slots, openDate }: Props) {
               : "empty";
             const bgColor = getColorForBucket(bucket);
             const isToday = dateStr === todayStr;
+            const isSelected = dateStr === selectedDate;
             const isSunday = cellIndex === 0;
             const isSaturday = cellIndex === 6;
             // 아직 오지 않은 날은 정정할 기록이 없어 흐리게, 눌리지 않는다.
@@ -155,7 +157,7 @@ export function Calendar({ slots, openDate }: Props) {
               <TouchableOpacity
                 key={cellIndex}
                 style={styles.cell}
-                onPress={() => setEditDate(dateStr)}
+                onPress={() => setSelectedDate(dateStr)}
                 disabled={isFuture}
                 activeOpacity={0.6}
                 accessibilityRole="button"
@@ -165,8 +167,14 @@ export function Calendar({ slots, openDate }: Props) {
                     styles.dayCircle,
                     {
                       backgroundColor: bgColor,
-                      borderWidth: isToday ? 2 : 0,
-                      borderColor: isToday ? colors.greenDark : "transparent",
+                      // 고른 날 = 진한 중립 링, 오늘 = 옅은 중립 링. 초록은
+                      // "먹음" 채움에만 쓴다.
+                      borderWidth: 2,
+                      borderColor: isSelected
+                        ? colors.text
+                        : isToday
+                          ? colors.uncheckedBorder
+                          : "transparent",
                       opacity: isFuture ? 0.35 : 1,
                     },
                   ]}
@@ -179,9 +187,9 @@ export function Calendar({ slots, openDate }: Props) {
                           bucket === "full"
                             ? colors.greenText
                             : isSunday
-                              ? "#EF4444"
+                              ? colors.sunday
                               : isSaturday
-                                ? "#3B82F6"
+                                ? colors.saturday
                                 : colors.text,
                       },
                     ]}
@@ -196,7 +204,7 @@ export function Calendar({ slots, openDate }: Props) {
       ))}
 
       {/* Legend */}
-      <View style={styles.legend}>
+      <View style={[styles.legend, { borderTopColor: colors.border }]}>
         <View style={styles.legendItem}>
           <View
             style={[styles.legendDot, { backgroundColor: colors.greenLight }]}
@@ -223,27 +231,12 @@ export function Calendar({ slots, openDate }: Props) {
         </View>
       </View>
 
-      <Text style={[styles.tapHint, { color: colors.textSecondary }]}>
-        {t("calendar.tapHint")}
-      </Text>
-
-      <DateEditSheet
-        visible={editDate !== null}
-        date={editDate}
-        slots={slots}
-        onClose={() => setEditDate(null)}
-        onChanged={refresh}
-      />
+      <DayRecord date={selectedDate} slots={slots} onChanged={refresh} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -296,9 +289,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 16,
     marginTop: 16,
-    paddingTop: 12,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
   },
   legendItem: {
     flexDirection: "row",
@@ -312,10 +304,5 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-  },
-  tapHint: {
-    fontSize: 12,
-    textAlign: "center",
-    marginTop: 14,
   },
 });

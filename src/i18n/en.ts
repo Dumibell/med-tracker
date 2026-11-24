@@ -16,7 +16,6 @@ type EnDict = Record<TranslationKey, string> & {
 export const en: EnDict = {
   "common.cancel": "Cancel",
   "common.confirm": "Done",
-  "common.close": "Close",
   "common.loading": "Loading…",
 
   "app.name": "먹었다",

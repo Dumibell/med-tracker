@@ -8,7 +8,6 @@
 export const ko = {
   "common.cancel": "취소",
   "common.confirm": "확인",
-  "common.close": "닫기",
   "common.loading": "로딩 중...",
 
   // 브랜드명은 번역하지 않는다.

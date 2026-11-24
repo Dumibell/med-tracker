@@ -53,7 +53,7 @@ export function formatTime(date: Date): string {
   });
 }
 
-/** 정정 시트 헤더: "7월 14일 (월)" / "Mon, Jul 14". 연도는 붙이지 않는다. */
+/** 캘린더 아래 그날 기록의 헤더: "7월 14일 (월)" / "Mon, Jul 14". 연도는 붙이지 않는다. */
 export function formatSheetDate(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString(locale, {
     month: "long",

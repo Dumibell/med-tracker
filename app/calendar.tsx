@@ -16,7 +16,7 @@ export default function CalendarScreen() {
   const router = useRouter();
   const colors = useColors();
   const { slots } = useSlots();
-  // 지난 알림을 눌러 들어오면 그날 정정 시트를 바로 연다.
+  // 지난 알림을 눌러 들어오면 그날을 골라 기록을 바로 보여준다.
   const { date } = useLocalSearchParams<{ date?: string }>();
 
   return (

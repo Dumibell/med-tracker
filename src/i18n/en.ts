@@ -80,7 +80,7 @@ export const en: EnDict = {
 
   "dateEdit.summary": "{completed} of {total} taken",
   "dateEdit.empty": "Nothing to take on this day",
-  "dateEdit.addTime": "Add time",
+  "dateEdit.markedTaken": "Marked as taken",
   "dateEdit.hint":
     "You don't need the exact time.\nJust mark what you took and the record catches up.",
   "dateEdit.a11y.taken": "{name} taken, tap to undo",

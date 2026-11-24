@@ -123,7 +123,11 @@ export function DayRecord({ date, slots, onChanged }: Props) {
           {daySlots.map((slot) => {
             const entry = log?.entries[slot.id];
             const taken = entry?.taken ?? false;
-            const slotWindow = `${formatClockTime(slot.start)} – ${formatClockTime(slot.end)}`;
+            const meta = taken
+              ? entry?.at
+                ? t("main.takenAt", { time: formatTime(new Date(entry.at)) })
+                : t("dateEdit.markedTaken")
+              : `${formatClockTime(slot.start)} – ${formatClockTime(slot.end)}`;
 
             return (
               <View
@@ -139,38 +143,26 @@ export function DayRecord({ date, slots, onChanged }: Props) {
                   <Text style={[styles.doseName, { color: colors.text }]}>
                     {slot.name}
                   </Text>
-                  {/* 체크된 줄은 시각 칩(설정 화면의 시간 버튼과 같은 모양 =
-                          눌러서 시각을 바꾼다), 미체크는 시간대 정보. */}
+                  {/* 체크된 줄은 시각 입력 링크(밑줄), 미체크는 시간대 정보. */}
                   {taken ? (
                     <TouchableOpacity
-                      style={[
-                        styles.timeChip,
-                        {
-                          borderColor: colors.border,
-                          backgroundColor: colors.surface,
-                        },
-                      ]}
                       onPress={() => setTimeSlot(slot.id)}
                       hitSlop={{ top: 6, bottom: 6, left: 2, right: 20 }}
                     >
                       <Text
-                        style={[styles.timeChipText, { color: colors.text }]}
+                        style={[
+                          styles.doseMetaLink,
+                          { color: colors.greenDark },
+                        ]}
                       >
-                        {entry?.at
-                          ? formatTime(new Date(entry.at))
-                          : t("dateEdit.addTime")}
+                        {meta}
                       </Text>
-                      <Ionicons
-                        name="chevron-down"
-                        size={14}
-                        color={colors.textSecondary}
-                      />
                     </TouchableOpacity>
                   ) : (
                     <Text
                       style={[styles.doseMeta, { color: colors.textSecondary }]}
                     >
-                      {slotWindow}
+                      {meta}
                     </Text>
                   )}
                 </View>
@@ -256,22 +248,11 @@ const styles = StyleSheet.create({
   doseMeta: {
     fontSize: 12,
   },
-  // 체크된 줄의 시각 칩. 설정 화면 시간 버튼(TimePickerRow)과 같은 모양이라
-  // "회색 박스 = 눌러서 시각 바꾸기"가 앱 전체에서 한 규칙이 된다.
-  timeChip: {
-    flexDirection: "row",
-    alignItems: "center",
+  // 체크된 줄의 시각 표시. 밑줄로 "눌러 시각을 넣을 수 있음"을 은근히 알린다.
+  doseMetaLink: {
+    fontSize: 12,
+    textDecorationLine: "underline",
     alignSelf: "flex-start",
-    gap: 4,
-    marginTop: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  timeChipText: {
-    fontSize: 13,
-    fontWeight: "500",
   },
   toggle: {
     width: 30,

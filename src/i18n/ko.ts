@@ -73,7 +73,7 @@ export const ko = {
   // 지난 날짜를 눌러 그날 복용을 바로잡는 시트.
   "dateEdit.summary": "{total}개 중 {completed}개 챙겼어요",
   "dateEdit.empty": "이 날은 챙길 약이 없었어요",
-  "dateEdit.addTime": "시각 넣기",
+  "dateEdit.markedTaken": "챙김으로 표시함",
   "dateEdit.hint":
     "먹은 시간까지는 몰라도 돼요.\n챙겼는지만 눌러 두면 기록이 맞춰져요.",
   "dateEdit.a11y.taken": "{name} 챙김, 탭하면 해제",

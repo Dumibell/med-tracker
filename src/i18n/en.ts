@@ -23,7 +23,7 @@ export const en: EnDict = {
 
   "main.streak_one": "{count} day in a row",
   "main.streak": "{count} days in a row",
-  "main.tapToCheck": "Not taken yet",
+  "main.tapToCheck": "Tap to check",
   "main.takenAt": "Taken at {time}",
   "main.editTime": "Edit time",
   "main.summary": "{completed} of {total} today",

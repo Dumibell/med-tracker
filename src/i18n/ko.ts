@@ -15,7 +15,7 @@ export const ko = {
   "app.name": "먹었다",
 
   "main.streak": "{count}일째 잘 챙기고 있어요",
-  "main.tapToCheck": "아직 안 먹음",
+  "main.tapToCheck": "탭하여 체크",
   "main.takenAt": "{time}에 먹음",
   "main.editTime": "시각 수정",
   "main.summary": "오늘 {completed}/{total} 완료",

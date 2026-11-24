@@ -196,7 +196,7 @@ export function Calendar({ slots, openDate }: Props) {
       ))}
 
       {/* Legend */}
-      <View style={styles.legend}>
+      <View style={[styles.legend, { borderTopColor: colors.border }]}>
         <View style={styles.legendItem}>
           <View
             style={[styles.legendDot, { backgroundColor: colors.greenLight }]}
@@ -286,7 +286,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 16,
-    marginTop: 20,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
   },
   legendItem: {
     flexDirection: "row",
